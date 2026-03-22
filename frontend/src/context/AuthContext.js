@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('userEmail', userData.email);
     };
 
+    //comment 1
     const logout = () => {
         setUser(null);
         localStorage.clear();
