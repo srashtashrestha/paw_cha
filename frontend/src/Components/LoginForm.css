@@ -1,0 +1,228 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; }
+
+.login-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;     /* Added to ensure full width */
+  height: 100vh;
+  background-color: #fdf5e6; /* Cream Background */
+  font-family: 'Outfit', sans-serif;
+}
+
+.login-card {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  width: 400px; /* Small/Compact width */
+  text-align: center;
+}
+
+.login-logo {
+  width: 75px; /* Compact logo size */
+  margin-bottom: 5px;
+}
+
+.login-header h2 {
+  font-size: 22px;
+  color: #2c1b18;
+  margin: 0;
+  font-weight: 700;
+}
+
+.login-header p {
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+/* Role Toggle Styling */
+.role-toggle {
+  display: flex;
+  background: #f5f5f5;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  padding: 4px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+.active-role {
+  background: #5d4037 !important; /* Design Brown */
+  color: white !important;
+}
+
+/* Input Fields */
+.field-group {
+  text-align: left;
+  margin-bottom: 15px;
+}
+
+.field-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.field-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #efefef;
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+/* Buttons */
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: #5d4037;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+.google-btn-custom {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #5d4037;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  color: #2c1b18;
+  margin-bottom: 10px;
+}
+
+.google-icon-img {
+  width: 18px;
+  height: 18px;
+}
+
+/* Divider */
+.divider {
+  margin: 20px 0 15px;
+  border-bottom: 1px solid #eee;
+  position: relative;
+}
+
+.divider span {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 0 10px;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.footer-msg {
+  font-size: 13px;
+  margin-top: 15px;
+}
+
+.signup-link {
+  font-weight: 700;
+  color: #000;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: 5px;
+}
+
+.forgot-password-container {
+  display: flex;
+  justify-content: flex-end; 
+  margin-top: 5px;
+}
+
+.forgot-link {
+  font-size: 12px;
+  color: #5d4037; 
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.field-group {
+  margin-bottom: 20px;
+}
+
+.forgot-card {
+    padding: 35px 30px; /* Giving it a bit more vertical room */
+}
+
+.forgot-title {
+    font-size: 24px !important;
+    margin-top: 10px !important;
+}
+
+.forgot-subtitle {
+    font-size: 12px !important;
+    line-height: 1.5;
+    margin-top: 8px;
+    color: #666;
+    padding: 0 10px;
+}
+
+.forgot-btn {
+    background: #8e8e8e !important;
+    transition: background 0.3s ease;
+}
+
+.forgot-btn:hover {
+    background: #5d4037 !important; 
+
+.forgot-card .divider {
+    margin: 25px 0 15px;
+}
+
+.submit-btn {
+    cursor: pointer; 
+    transition: opacity 0.3s ease;
+}
+
+.submit-btn:active {
+    opacity: 0.8; 
+    transform: scale(0.98);
+}
+}

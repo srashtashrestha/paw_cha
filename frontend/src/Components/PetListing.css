@@ -1,0 +1,251 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+.listing-page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #FDFAEF;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* --- HERO SECTION --- */
+.listing-hero {
+    display: flex;
+    width: 100%;
+    padding: 80px 120px;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    background: linear-gradient(180deg, #FDFAEF 0%, #F2EFFD 143.31%);
+}
+
+.hero-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #1B1B1B;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.hero-subtitle {
+    text-align: center;
+    max-width: 600px; 
+    color: #505050;
+    font-size: 18px;
+}
+
+.highlight-purple { color: #7F65F0; }
+
+.filters-container {
+    width: 100%;
+    max-width: 1000px;
+    background: #FFFFFF;
+    padding: 32px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.filters-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1B1B1B;
+}
+
+.filter-dropdown {
+    display: flex;
+    padding: 8px 16px;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    height: 48px;
+    background: white;
+    border-radius: 16px;
+    border: 0.8px solid #1B1B1B;
+    font-family: 'Outfit', sans-serif;
+    color: #1B1B1B;
+    font-size: 16px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%231B1B1B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 18px;
+}
+
+/* --- GRID SECTION --- */
+.pet-grid-section {
+    /* Keeps your 120px padding and adds the 80px bottom padding from Figma */
+    padding: 80px 120px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: stretch;
+    width: 100%;
+}
+
+.pet-grid-inner {
+    width: 100%;
+
+    align-self: stretch;
+    max-width: 1200px;
+    display: grid;
+    /* CHANGE THIS LINE: Forces 4 columns of a specific width */
+    grid-template-columns: repeat(4, 190px); 
+    /* THIS IS YOUR GAP */
+    gap: 24px; 
+    /* THIS IS WHAT CENTERS THE GRID */
+    justify-content: space-between; 
+    
+}
+
+.pet-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid #E6E2D3;
+    transition: all 0.3s ease;
+}
+
+.pet-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+
+.pet-card-image {
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: #E6E2D3;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.wishlist-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+/* --- WISHLIST BUTTON INTERACTION --- */
+.wishlist-btn {
+    /* ... keep your existing properties ... */
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+}
+
+/* Hover Effect: button grows slightly and adds a subtle purple tint */
+.wishlist-btn:hover {
+    transform: scale(1.1);
+    background-color: #F2EFFD; /* Light purple tint from hero */
+}
+
+/* Active/Click Effect: button "pops" down when pressed */
+.wishlist-btn:active {
+    transform: scale(0.9);
+}
+
+/* Active State: subtle shadow change when favorited */
+.wishlist-btn.active {
+    box-shadow: 0 4px 12px rgba(127, 101, 240, 0.3);
+}
+
+/* Ensure the Lucide icon inside transitions smoothly */
+.wishlist-btn svg {
+    transition: fill 0.2s ease, transform 0.2s ease;
+}
+
+.pet-card-details {
+    padding: 20px;
+}
+
+.pet-name-title h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+}
+
+.pet-meta {
+    font-size: 14px;
+    color: #505050;
+    margin-bottom: 8px;
+}
+
+.pet-location-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6D5D4B;
+    margin-bottom: 20px;
+}
+
+/* --- BUTTONS (Unified Brown Style) --- */
+.search-btn-brown, 
+.view-profile-btn-brown, 
+.load-more-btn-brown {
+    background-color: #5d4037;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Outfit';
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.search-btn-brown {
+    height: 52px;
+    padding: 0 32px;
+}
+
+.view-profile-btn-brown {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+}
+
+.load-more-btn-brown {
+    margin-top: 60px;
+    padding: 14px 40px;
+    background: #FDFAEF;
+    color: #5d4037;
+    border: 2px solid #5d4037;
+}
+
+.search-btn-brown:hover, 
+.view-profile-btn-brown:hover {
+    background-color: #4a332c;
+}
+
+.load-more-btn-brown:hover {
+    background: #5d4037;
+    color: white;
+}

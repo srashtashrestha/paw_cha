@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+.pawcha-navbar {
+    display: flex;
+    height: 90px; 
+    padding: 8px 120px;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    background: linear-gradient(90deg, rgba(253, 250, 239, 0.40) 0%, rgba(253, 250, 239, 0.10) 100%);
+    backdrop-filter: blur(50px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    font-family: 'Outfit', sans-serif;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 32px; 
+}
+
+.nav-item {
+    text-decoration: none;
+    color: #1B1B1B; 
+    font-size: 16px; 
+    font-weight: 600; /* Semibold */
+    padding: 4px 0;
+    position: relative;
+    /* This removes the "ghost" box from your screenshot */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.nav-item::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background-color: #5d4037;
+    transition: width 0.3s ease;
+}
+
+/* Home will use this state because it has the 'active' class */
+.nav-item.active {
+    font-weight: 700 !important; /* Bold */
+    color: #5d4037 !important;
+}
+
+.nav-item.active::after, .nav-item:hover::after {
+    width: 100%;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.contact-us {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1B1B1B;
+    cursor: pointer;
+}
+
+.nav-auth-btns {
+    display: flex;
+    gap: 8px; /* Precise spacing you asked for */
+}
+
+.nav-btn {
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    font-family: 'Outfit', sans-serif;
+}
+
+.nav-btn.login {
+    background: white;
+    border: 1px solid #5d4037;
+    color: #5d4037;
+}
+
+.nav-btn.register {
+    background: #5d4037; /* Brown from your login page */
+    border: none;
+    color: white;
+}
+
+.nav-btn:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
+}
+
+.navbar-logo {
+    height: 55px; 
+    cursor: pointer;
+}

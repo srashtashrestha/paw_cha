@@ -1,0 +1,452 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* Container & Layout */
+.pawcha-profile-container {
+    background-color: #FDFCF6;
+    min-height: 100vh;
+    font-family: 'Outfit', sans-serif;
+    color: #333;
+}
+
+.profile-top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 4rem;
+    background: white;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-logo { 
+    height: 38px; 
+    transition: opacity 0.2s;
+}
+
+.nav-logo:hover { opacity: 0.8; }
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.nav-icon-btn {
+    background: #f8f8f8;
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.nav-icon-btn:hover {
+    background: #f0f0f0;
+    transform: translateY(-2px);
+}
+
+.nav-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 10px;
+    border-left: 1px solid #eee;
+}
+
+/* Avatar Circle for clean look */
+.avatar-circle {
+    width: 35px;
+    height: 35px;
+    background: #4a332d;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.profile-content {
+    max-width: 1250px;
+    margin: 0 auto;
+    padding: 2rem 4rem;
+}
+
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 2rem;
+    transition: color 0.2s;
+}
+
+.back-link:hover { color: #333; }
+
+/* Grid System */
+.profile-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 450px;
+    gap: 4rem;
+    align-items: start;
+}
+
+/* Details Panel (Left) */
+.details-panel h1 {
+    font-size: 2.8rem;
+    margin: 0;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.title-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.utility-btns {
+    display: flex;
+    gap: 12px;
+}
+
+.circ-action {
+    background: white;
+    border: 1px solid #eee;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #666;
+}
+
+.circ-action:hover {
+    border-color: #EBC374;
+    color: #333;
+    transform: translateY(-2px);
+}
+
+.circ-action.is-fav {
+    background-color: #f3efff;
+    border-color: #7c4dff;
+    color: #7c4dff;
+}
+
+.quick-specs {
+    margin-bottom: 2rem;
+    color: #666;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.health-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 20px;
+    border: 1px solid #f0f0f0;
+    margin: 2rem 0;
+}
+
+.health-card h3 { margin-top: 0; font-size: 1.1rem; color: #444; }
+
+.health-tags {
+    display: flex;
+    gap: 24px;
+    margin-top: 12px;
+}
+
+.h-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #555;
+}
+
+.vet-note {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-weight: 500;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+/* Description Box */
+.description-box {
+    background-color: #FFF9E5;
+    padding: 2rem;
+    border-radius: 24px;
+    margin: 2.5rem 0;
+}
+
+.description-box h4 { margin-top: 0; font-size: 1.2rem; color: #333; }
+.description-box p { line-height: 1.7; color: #555; font-size: 1rem; }
+
+/* Tags/Bubbles */
+.bubble-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.bubble-tag {
+    background: white;
+    border: 1px solid #eee;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.bubble-tag:hover {
+    border-color: #EBC374;
+    background: #FFF9E5;
+}
+
+.bubble-tag.outline {
+    background: transparent;
+    border-style: dashed;
+}
+
+.personality-section, .loves-section {
+    margin-bottom: 2.5rem;
+}
+
+.personality-section h3, .loves-section h3 {
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.apply-primary-btn {
+    background-color: #EBC374;
+    color: #333;
+    border: none;
+    width: 100%;
+    padding: 1.25rem;
+    border-radius: 50px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    margin-top: 1rem;
+    box-shadow: 0 4px 15px rgba(235, 195, 116, 0.3);
+}
+
+.apply-primary-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(235, 195, 116, 0.4);
+}
+
+.apply-primary-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Visuals Panel (Right) */
+.image-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.main-img-wrap img {
+    width: 100%;
+    height: 480px;
+    object-fit: cover;
+    border-radius: 32px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.thumb-strip {
+    display: flex;
+    gap: 12px;
+}
+
+.thumb-strip img {
+    width: calc(33.33% - 8px);
+    height: 110px;
+    object-fit: cover;
+    border-radius: 18px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.thumb-strip img:hover { transform: scale(1.05); }
+
+/* Care/Shelter Card */
+.care-card {
+    background: white;
+    padding: 1.8rem;
+    border-radius: 28px;
+    margin-top: 2.5rem;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+}
+
+.cared-label { 
+    color: #aaa; 
+    font-size: 0.85rem; 
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px; 
+    display: block;
+}
+
+.shelter-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.shelter-text h5 { 
+    margin: 0; 
+    font-size: 1.2rem; 
+    color: #1a1a1a;
+}
+
+.shelter-text p { 
+    margin: 8px 0 15px 0; 
+    color: #777; 
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
+    font-size: 0.95rem;
+}
+
+.loc-btn {
+    background: #FFF9E5;
+    border: 1px solid #EBC374;
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    color: #333;
+}
+
+.loc-btn:hover { background: #EBC374; }
+
+.map-placeholder {
+    flex-shrink: 0;
+}
+
+.map-placeholder img {
+    width: 110px;
+    height: 110px;
+    border-radius: 20px;
+    object-fit: cover;
+    border: 1px solid #eee;
+}
+
+/* Loader/Error */
+.loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 80vh;
+    font-size: 1.2rem;
+    color: #666;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .profile-main-grid {
+        grid-template-columns: 1fr;
+    }
+    .visuals-panel { order: -1; }
+    .profile-content { padding: 2rem; }
+    .profile-top-nav { padding: 1rem 2rem; }
+}
+
+.map-container {
+    width: 130px;
+    height: 130px;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+.map-container iframe {
+    width: 100%;
+    height: 100%;
+}
+
+.profile-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 480px; /* Kept info on left, visuals on right */
+    gap: 3rem;
+    align-items: start;
+}
+
+/* Ensure one frame and responsive behavior */
+.details-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.visuals-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: sticky;
+    top: 100px; /* Keeps image and map pinned while scrolling left side */
+}
+
+/* Fix for the Map appearance */
+.map-container {
+    width: 140px;
+    height: 120px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+.map-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Maintain responsive stacking for mobile */
+@media (max-width: 1100px) {
+    .profile-main-grid {
+        grid-template-columns: 1fr;
+    }
+    .visuals-panel {
+        position: static;
+        order: -1; /* Puts photo on top for mobile */
+    }
+    .main-img-wrap img {
+        height: 350px;
+    }
+}

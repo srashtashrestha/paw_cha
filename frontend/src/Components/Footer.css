@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+.pawcha-footer {
+  display: flex;
+  width: 100%; 
+  justify-content: center;
+  background: #FDFAEF;
+  border-top: 1px solid rgba(74, 60, 42, 0.1);
+}
+
+.footer-inner {
+  display: flex;
+  width: 1440px;
+  padding: 80px 120px;
+  flex-direction: column;
+  align-items: flex-start; /* Ensures everything aligns to the left margin */
+  gap: 48px;
+  box-sizing: border-box;
+  font-family: 'Outfit', sans-serif;
+}
+
+.footer-content {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* BRAND SECTION - Fixed Alignment */
+.footer-brand-section {
+  display: flex;
+  width: 384px;
+  flex-direction: column;
+  align-items: flex-start; /* Left align items */
+  text-align: left; /* Left align text */
+  gap: 16px;
+}
+
+.footer-logo {
+  height: 48px;
+  width: auto;
+}
+
+.footer-text {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #6D5D4B;
+  margin: 0;
+}
+
+/* SOCIAL ICONS */
+.footer-socials {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start; /* Start from the left */
+  margin-left: -10px; /* Offsets the hover circle padding for perfect alignment */
+}
+
+.social-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 52px; 
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #4A3C2A;
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.social-icon-wrapper:hover {
+  background-color: #4A3C2A;
+  color: #FDFAEF;
+}
+
+/* LINKS CONTAINER */
+.footer-links-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 122px;
+}
+
+.footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.footer-heading {
+  font-size: 20px;
+  font-weight: 600;
+  color: #4A3C2A;
+  margin: 0;
+}
+
+.footer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* HOVER EFFECT (No Shift) */
+.footer-list li, 
+.contact-item {
+  font-size: 16px;
+  font-weight: 400;
+  color: #6D5D4B;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.footer-list li:hover, 
+.contact-item:hover {
+  color: #4A3C2A;
+  text-shadow: 0.5px 0 0 #4A3C2A, -0.5px 0 0 #4A3C2A;
+}
+
+/* CONTACT SECTION */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.contact-item svg {
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+/* BOTTOM SECTION */
+.footer-divider {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(74, 60, 42, 0.1);
+}
+
+.footer-bottom {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.copyright {
+  font-size: 12px;
+  color: #8D7F70;
+}
+
+.legal-links {
+  display: flex;
+  gap: 24px;
+}
+
+.legal-links span {
+  font-size: 12px;
+  color: #8D7F70;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.legal-links span:hover {
+  color: #4A3C2A;
+  text-decoration: underline;
+}
