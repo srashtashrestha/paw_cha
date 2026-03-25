@@ -65,13 +65,17 @@ const PetSchema = new mongoose.Schema({
 });
 const Pet = mongoose.model("Pet", PetSchema);
 
+// UPDATED INQUIRY SCHEMA
 const InquirySchema = new mongoose.Schema({
-    petId: { type: mongoose.Schema.Types.ObjectId, ref: 'Pet' },
-    donorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    petId: { type: mongoose.Schema.Types.ObjectId, ref: 'Pet', required: true },
+    donorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    adopterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, 
     adopterName: { type: String, required: true },
     adopterEmail: { type: String, required: true },
-    message: { type: String },
-    status: { type: String, default: 'New' },
+    phone: { type: String },
+    motivation: { type: String },
+    additionalInfo: { type: String },
+    status: { type: String, default: 'pending' },
     createdAt: { type: Date, default: Date.now }
 });
 const Inquiry = mongoose.model("Inquiry", InquirySchema);
@@ -100,7 +104,36 @@ app.get("/", (req, res) => {
     res.send("Server is Live and Running!");
 });
 
-// --- LOGIN ROUTE (UPDATED TO SEND EMAIL) ---
+// --- HANDLE ADOPTION APPLICATION ---
+app.post("/api/inquiries/apply", authenticate, async (req, res) => {
+    try {
+        const { petId, donorId, adopterName, adopterEmail, phone, motivation, additionalInfo } = req.body;
+        
+        if (!donorId) {
+            return res.status(400).json({ success: false, message: "Donor ID is required." });
+        }
+
+        const newInquiry = new Inquiry({
+            petId,
+            donorId,
+            adopterId: req.user.id, 
+            adopterName,
+            adopterEmail,
+            phone,
+            motivation,
+            additionalInfo,
+            status: 'pending'
+        });
+
+        await newInquiry.save();
+        res.status(201).json({ success: true, message: "Application submitted successfully!" });
+    } catch (error) {
+        console.error("Inquiry Error:", error);
+        res.status(500).json({ success: false, message: "Failed to submit application." });
+    }
+});
+
+// --- LOGIN ROUTE ---
 app.post("/api/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -112,20 +145,19 @@ app.post("/api/login", async (req, res) => {
             return res.status(403).json({ success: false, message: "Account pending admin approval." });
         }
 
-        // Include email in the token payload
         const token = jwt.sign(
             { id: user._id, role: user.role, email: user.email }, 
             SECRET_KEY, 
             { expiresIn: "1h" }
         );
 
-        // SEND EMAIL IN RESPONSE
         res.json({ 
             success: true, 
             token, 
             role: user.role, 
             fullName: user.fullName,
-            email: user.email // Added this so frontend can save it to localStorage
+            email: user.email,
+            id: user._id 
         });
     } catch (error) {
         res.status(500).json({ success: false, message: "Server Error" });
@@ -144,7 +176,7 @@ app.post("/api/pets/list", authenticate, upload.array("petImages", 4), async (re
     }
 });
 
-// GET PET DETAILS
+// GET ALL PETS (ADMIN/EXPLORE)
 app.get("/api/admin/all-pets", async (req, res) => {
     try {
         const pets = await Pet.find().populate('donorId', 'fullName email').sort({ createdAt: -1 });
@@ -212,12 +244,38 @@ app.get("/api/donor/my-pets", authenticate, async (req, res) => {
     }
 });
 
+// GET INQUIRIES FOR DONOR DASHBOARD
 app.get("/api/donor/inquiries", authenticate, async (req, res) => {
     try {
-        const inquiries = await Inquiry.find({ donorId: req.user.id }).populate('petId').sort({ createdAt: -1 });
+        const inquiries = await Inquiry.find({ donorId: req.user.id })
+            .populate('petId', 'name images')
+            .populate('adopterId', 'fullName email')
+            .sort({ createdAt: -1 });
         res.json({ success: true, inquiries });
     } catch (error) {
         res.status(500).json({ success: false });
+    }
+});
+
+// === ADDED: UPDATE INQUIRY STATUS (APPROVE/REJECT) ===
+app.put("/api/inquiries/status/:id", authenticate, async (req, res) => {
+    try {
+        const { status } = req.body;
+        // Verify that the inquiry belongs to the donor who is logged in
+        const inquiry = await Inquiry.findOneAndUpdate(
+            { _id: req.params.id, donorId: req.user.id },
+            { status: status },
+            { new: true }
+        );
+
+        if (!inquiry) {
+            return res.status(404).json({ success: false, message: "Inquiry not found or unauthorized" });
+        }
+
+        res.json({ success: true, message: `Application ${status} successfully!`, inquiry });
+    } catch (error) {
+        console.error("Status Update Error:", error);
+        res.status(500).json({ success: false, message: "Server error during status update" });
     }
 });
 

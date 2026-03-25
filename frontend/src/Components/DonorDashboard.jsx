@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Bell, MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, CheckCircle, RefreshCcw, Mail, Phone, Calendar, Check, Trash2 } from 'lucide-react';
+import { MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, RefreshCcw, Mail, Phone, Calendar } from 'lucide-react';
 import './DonorDashboard.css';
 import logo from '../Assets/Logo/Logo.png'; 
 
@@ -9,10 +9,9 @@ const DonorDashboard = () => {
     const [activeTab, setActiveTab] = useState('inventory');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formStep, setFormStep] = useState(1);
-    const [inquiries, setInquiries] = useState([]); // Holds adoption requests
+    const [inquiries, setInquiries] = useState([]); 
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [myPets, setMyPets] = useState([]);
-    const [loading, setLoading] = useState(true); 
     const [selectedPetId, setSelectedPetId] = useState(null);
 
     const [petData, setPetData] = useState({
@@ -22,13 +21,12 @@ const DonorDashboard = () => {
         lovesLikes: '', reasonForAdoption: ''
     });
 
-    const donorName = user?.name || 'Donor';
+    const donorName = user?.fullName || 'Donor';
 
     // --- FETCHING DATA ---
 
     const fetchMyPets = useCallback(async () => {
         if (!user?.token) return;
-        setLoading(true);
         try {
             const response = await fetch("http://localhost:5000/api/donor/my-pets", {
                 headers: { 
@@ -41,8 +39,6 @@ const DonorDashboard = () => {
             if (result.success) setMyPets(result.pets);
         } catch (error) {
             console.error("Connection error:", error);
-        } finally {
-            setLoading(false);
         }
     }, [user?.token, logout]);
 
@@ -69,8 +65,10 @@ const DonorDashboard = () => {
     // --- HANDLERS ---
 
     const handleStatusUpdate = async (inquiryId, newStatus) => {
+        if (!window.confirm(`Are you sure you want to ${newStatus} this inquiry?`)) return;
+        
         try {
-            const response = await fetch(`http://localhost:5000/api/inquiries/${inquiryId}/status`, {
+            const response = await fetch(`http://localhost:5000/api/inquiries/status/${inquiryId}`, {
                 method: "PUT",
                 headers: { 
                     "Authorization": `Bearer ${user.token}`,
@@ -80,7 +78,6 @@ const DonorDashboard = () => {
             });
             const result = await response.json();
             if (result.success) {
-                // Update local state so UI reflects the change immediately
                 setInquiries(prev => prev.map(inv => inv._id === inquiryId ? { ...inv, status: newStatus } : inv));
             }
         } catch (error) {
@@ -95,7 +92,8 @@ const DonorDashboard = () => {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${user.token}` }
             });
-            if ((await response.json()).success) {
+            const result = await response.json();
+            if (result.success) {
                 setMyPets(prev => prev.filter(pet => pet._id !== petId));
             }
         } catch (error) { console.error(error); }
@@ -119,22 +117,46 @@ const DonorDashboard = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // 1. Create FormData
         const data = new FormData();
-        Object.keys(petData).forEach(key => data.append(key, petData[key]));
-        selectedFiles.forEach(file => data.append('petImages', file));
+        Object.keys(petData).forEach(key => {
+            data.append(key, petData[key]);
+        });
+        
+        // 2. Append files
+        selectedFiles.forEach(file => {
+            data.append('petImages', file);
+        });
 
-        const url = selectedPetId ? `http://localhost:5000/api/pets/update/${selectedPetId}` : "http://localhost:5000/api/pets/list";
+        const url = selectedPetId 
+            ? `http://localhost:5000/api/pets/update/${selectedPetId}` 
+            : "http://localhost:5000/api/pets/list";
+
         try {
+            // IMPORTANT: Do NOT set 'Content-Type' when sending FormData.
+            // The browser will automatically set it to 'multipart/form-data' with the correct boundary.
             const response = await fetch(url, {
                 method: selectedPetId ? "PUT" : "POST",
-                headers: { "Authorization": `Bearer ${user.token}` },
+                headers: { 
+                    "Authorization": `Bearer ${user.token}` 
+                },
                 body: data
             });
-            if ((await response.json()).success) {
+
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(selectedPetId ? "Pet updated successfully!" : "Pet listed successfully!");
                 closeModal();
                 fetchMyPets();
+            } else {
+                alert("Failed to save pet: " + result.message);
             }
-        } catch (error) { console.error(error); }
+        } catch (error) { 
+            console.error("Error submitting pet:", error);
+            alert("A connection error occurred. Check the console.");
+        }
     };
 
     const handleEditClick = (pet) => {
@@ -148,15 +170,6 @@ const DonorDashboard = () => {
             reasonForAdoption: pet.reasonForAdoption || ''
         });
         setIsModalOpen(true);
-    };
-
-    const getPreviewImage = () => {
-        if (selectedFiles.length > 0) return URL.createObjectURL(selectedFiles[0]);
-        if (selectedPetId) {
-            const pet = myPets.find(p => p._id === selectedPetId);
-            return pet?.images?.[0] ? `http://localhost:5000/uploads/${pet.images[0]}` : null;
-        }
-        return null;
     };
 
     return (
@@ -240,10 +253,10 @@ const DonorDashboard = () => {
                                 <div key={inq._id} className="inquiry-card">
                                     <div className="inquiry-header">
                                         <div className="adopter-profile">
-                                            <div className="mini-avatar">{inq.adopterName?.[0] || 'A'}</div>
+                                            <div className="mini-avatar">{inq.adopterId?.fullName?.[0] || 'A'}</div>
                                             <div>
-                                                <h3>{inq.adopterName}</h3>
-                                                <p className="app-for">Interested in <strong>{inq.petName}</strong></p>
+                                                <h3>{inq.adopterId?.fullName || inq.adopterName}</h3>
+                                                <p className="app-for">Interested in <strong>{inq.petId?.name || 'Deleted Pet'}</strong></p>
                                             </div>
                                         </div>
                                         <span className={`status-pill ${inq.status}`}>{inq.status}</span>
@@ -251,18 +264,39 @@ const DonorDashboard = () => {
                                     
                                     <div className="inquiry-body">
                                         <div className="contact-info-row">
-                                            <span><Mail size={14}/> {inq.adopterEmail}</span>
+                                            <span><Mail size={14}/> {inq.adopterId?.email || inq.adopterEmail}</span>
+                                            {inq.phone && <span><Phone size={14}/> {inq.phone}</span>}
                                             <span><Calendar size={14}/> {new Date(inq.createdAt).toLocaleDateString()}</span>
                                         </div>
-                                        <div className="motivation-box">
-                                            <p>"{inq.message}"</p>
-                                        </div>
+                                        
+                                        {inq.motivation && (
+                                            <div className="motivation-box">
+                                                <h4 style={{ fontSize: '12px', color: '#8d6e63', marginBottom: '4px' }}>Motivation:</h4>
+                                                <p>"{inq.motivation}"</p>
+                                            </div>
+                                        )}
+
+                                        {inq.additionalInfo && (
+                                            <div className="additional-info-box" style={{ marginTop: '10px', fontSize: '13px', color: '#5d4037' }}>
+                                                <strong>Note:</strong> {inq.additionalInfo}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {inq.status === 'pending' && (
                                         <div className="inquiry-footer">
-                                            <button className="btn-secondary" onClick={() => handleStatusUpdate(inq._id, 'rejected')}>Reject</button>
-                                            <button className="btn-primary" onClick={() => handleStatusUpdate(inq._id, 'approved')}>Approve Adoption</button>
+                                            <button 
+                                                className="delete-action-btn" 
+                                                onClick={() => handleStatusUpdate(inq._id, 'rejected')}
+                                            >
+                                                Reject
+                                            </button>
+                                            <button 
+                                                className="edit-action-btn" 
+                                                onClick={() => handleStatusUpdate(inq._id, 'approved')}
+                                            >
+                                                Approve Adoption
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -307,7 +341,6 @@ const DonorDashboard = () => {
                                         <button type="button" className="next-btn" onClick={() => setFormStep(2)}>Next</button>
                                     </div>
                                 )}
-                                {/* Health, Personality, and Review steps simplified here for brevity - follow original logic */}
                                 {formStep === 2 && (
                                     <div className="form-step">
                                         <h3>Medical Records</h3>
