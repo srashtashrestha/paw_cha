@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  --text-main: #1a1a1a;
+  --text-sub: #666666;
+  
+  /* Status Colors */
+  --pending-bg: #fffbf0; --pending-text: #b26a00;
+  --approved-bg: #f0fdf4; --approved-text: #166534;
+  --rejected-bg: #fef2f2; --rejected-text: #991b1b;
+}
+
+/* Container Adjustments */
+.applications-container {
+    padding: 20px 0; /* Reduced because adopter-main already has padding */
+    font-family: 'Outfit', sans-serif;
+}
+
+.applications-container h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 40px;
+    letter-spacing: -0.03em;
+}
+
+/* Bento Grid */
+.apps-bento-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+}
+
+/* Premium Bento Card */
+.app-card {
+    background: #ffffff;
+    border-radius: 32px; /* Smoother, larger radius */
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: var(--card-shadow);
+}
+
+.app-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    border-color: var(--primary-gold);
+}
+
+/* Image with Gradient Overlay */
+.app-card img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.app-card:hover img {
+    transform: scale(1.05);
+}
+
+/* Content Hierarchy */
+.app-info {
+    padding: 24px;
+    background: #ffffff;
+    z-index: 2;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-info h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 12px;
+}
+
+/* Refined Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-radius: 16px; /* Squircle style instead of pill */
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+    margin-bottom: 16px;
+}
+
+.status-badge svg {
+    width: 16px;
+    height: 16px;
+}
+
+.status-pending { background: var(--pending-bg); color: var(--pending-text); }
+.status-approved { background: var(--approved-bg); color: var(--approved-text); }
+.status-rejected { background: var(--rejected-bg); color: var(--rejected-text); }
+
+/* Timeline/Date Style */
+.app-date {
+    font-size: 0.85rem;
+    color: var(--text-sub);
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Empty State Styling */
+.status-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 40px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px dashed #e0e0e0;
+    border-radius: 32px;
+    color: var(--text-sub);
+    font-weight: 500;
+}

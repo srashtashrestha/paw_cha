@@ -1,72 +1,101 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // 1. Professional Import
-import { Search, Bell, Heart, Layout, MessageSquare, ClipboardList, Settings, LogOut, MapPin } from 'lucide-react';
+import { useAuth } from '../context/AuthContext'; 
+import { Search, Bell, Heart, MapPin,ChevronLeft, ChevronRight } from 'lucide-react';
 import './AdopterDashboard.css';
-import logo from '../Assets/Logo/Logo.png';
+import AdopterSideBar from './AdopterSideBar';
 
 const AdopterDashboard = () => {
     const navigate = useNavigate();
-    const { user, logout } = useAuth(); // 2. Get user and logout from context
+    const { user } = useAuth(); 
     const [pets, setPets] = useState([]);
-    const [favorites, setFavorites] = useState([]); 
+    const [myInquiries, setMyInquiries] = useState([]); 
+    const scrollRef = useRef(null);
+    
+    const [showLeftArrow, setShowLeftArrow] = useState(false);
+    const [showRightArrow, setShowRightArrow] = useState(true);
+
+    const [favorites, setFavorites] = useState(() => {
+        const saved = localStorage.getItem('pawcha_favorites');
+        return saved ? JSON.parse(saved) : [];
+    });
+    
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
     
-    // 3. Security Check: Only use the name if the role is actually 'adopter'
     const adopterName = user?.role === 'adopter' ? user.name : 'User';
 
-    useEffect(() => {
-        fetchPets();
-    }, []);
-
-    const fetchPets = async () => {
-        try {
-            const response = await fetch("http://localhost:5000/api/admin/all-pets");
-            const result = await response.json();
-            if (result.success) setPets(result.pets);
-        } catch (error) {
-            console.error("Error fetching pets:", error);
-        } finally {
-            setLoading(false);
+    const handleScroll = () => {
+        if (scrollRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+            setShowLeftArrow(scrollLeft > 10);
+            setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
         }
     };
 
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const petResponse = await fetch("http://localhost:5000/api/admin/all-pets");
+                const petResult = await petResponse.json();
+                
+                const inqResponse = await fetch(`http://localhost:5000/api/adopter/my-inquiries`, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                });
+                const inqResult = await inqResponse.json();
+
+                if (petResult.success) setPets(petResult.pets);
+                if (inqResult.success) setMyInquiries(inqResult.inquiries);
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (user?.token) fetchData();
+    }, [user]);
+
+    useEffect(() => {
+        handleScroll();
+        window.addEventListener('resize', handleScroll);
+        return () => window.removeEventListener('resize', handleScroll);
+    }, [pets, loading]);
+
     const toggleFavorite = (e, petId) => {
         e.stopPropagation();
-        setFavorites(prev => 
-            prev.includes(petId) 
+        setFavorites(prev => {
+            const updated = prev.includes(petId) 
                 ? prev.filter(id => id !== petId) 
-                : [...prev, petId]
-        );
+                : [...prev, petId];
+            localStorage.setItem('pawcha_favorites', JSON.stringify(updated));
+            return updated;
+        });
     };
 
     const filteredPets = useMemo(() => {
-        return pets.filter(pet => 
-            pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            pet.type.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [searchTerm, pets]);
+        return [...pets]
+            .reverse() 
+            .filter(pet => !myInquiries.some(inquiry => inquiry.petId?._id === pet._id))
+            .filter(pet => 
+                pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                pet.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                pet.location.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+    }, [searchTerm, pets, myInquiries]);
+
+    const scroll = (direction) => {
+        if (scrollRef.current) {
+            const { clientWidth } = scrollRef.current;
+            const scrollAmount = direction === 'left' ? -clientWidth : clientWidth;
+            scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    };
 
     return (
         <div className="adopter-container">
-            <aside className="adopter-sidebar">
-                <div className="logo-area">
-                    <img src={logo} alt="PawCha" className="nav-logo" />
-                </div>
-                <nav className="adopter-nav">
-                    <button className="active"><Layout size={20} /> Dashboard</button>
-                    <button><MessageSquare size={20} /> Messages</button>
-                    <button><ClipboardList size={20} /> Pet Listings</button>
-                    <button><ClipboardList size={20} /> My Applications</button>
-                    <button><Heart size={20} /> Favourites</button>
-                </nav>
-                <div className="sidebar-footer">
-                    <button className="footer-link"><Settings size={18} /> Settings</button>
-                    {/* 4. Use the professional logout function */}
-                    <button className="footer-link logout" onClick={logout}><LogOut size={18} /> Log Out</button>
-                </div>
-            </aside>
+            <AdopterSideBar />
 
             <main className="adopter-main">
                 <header className="adopter-header">
@@ -90,27 +119,53 @@ const AdopterDashboard = () => {
                     </div>
                 </header>
 
-                <section className="listings-section">
+                <section className="listings-section" style={{ position: 'relative' }}>
                     <div className="section-header">
-                        <h2>Meet Pets Ready for Adoption</h2>
+                        <h2>{searchTerm ? "Search Results" : "Recently Added Pets"}</h2>
                         <button className="explore-all-btn" onClick={() => navigate('/explore-pets')}>
                             Explore All
                         </button>
                     </div>
 
-                    <div className="pets-scroll-grid">
+                    {!loading && filteredPets.length > 0 && (
+                        <>
+                            {showLeftArrow && (
+                                <button className="scroll-arrow-btn left" onClick={() => scroll('left')}>
+                                    <ChevronLeft size={24} />
+                                </button>
+                            )}
+                            {showRightArrow && (
+                                <button className="scroll-arrow-btn right" onClick={() => scroll('right')}>
+                                    <ChevronRight size={24} />
+                                </button>
+                            )}
+                        </>
+                    )}
+
+                    <div 
+                        className="pets-scroll-grid" 
+                        ref={scrollRef}
+                        onScroll={handleScroll}
+                    >
                         {loading ? (
                             <div className="status-msg">Loading pets...</div>
                         ) : filteredPets.length > 0 ? (
                             filteredPets.map(pet => (
                                 <div key={pet._id} className="pet-item-card">
                                     <div className="pet-thumb">
-                                        <img src={pet.images?.[0] ? `http://localhost:5000/uploads/${pet.images[0]}` : '/placeholder.png'} alt={pet.name} />
+                                        <img 
+                                            src={pet.images?.[0] ? `http://localhost:5000/uploads/${pet.images[0]}` : '/placeholder.png'} 
+                                            alt={pet.name} 
+                                        />
                                         <button 
                                             className={`fav-overlay ${favorites.includes(pet._id) ? 'is-fav' : ''}`}
                                             onClick={(e) => toggleFavorite(e, pet._id)}
                                         >
-                                            <Heart size={18} fill={favorites.includes(pet._id) ? "#7c4dff" : "none"} />
+                                            <Heart 
+                                                size={18} 
+                                                fill={favorites.includes(pet._id) ? "#7c4dff" : "none"} 
+                                                color={favorites.includes(pet._id) ? "#7c4dff" : "currentColor"}
+                                            />
                                         </button>
                                     </div>
                                     <div className="pet-info">
@@ -124,7 +179,9 @@ const AdopterDashboard = () => {
                                 </div>
                             ))
                         ) : (
-                            <div className="status-msg">No pets found matching your search.</div>
+                            <div className="status-msg">
+                                {searchTerm ? "No pets found matching your search." : "You've applied for all available pets!"}
+                            </div>
                         )}
                     </div>
                 </section>

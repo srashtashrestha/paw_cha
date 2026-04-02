@@ -19,7 +19,7 @@ const DonorRegister = () => {
         formData.append('idCard', idCard);
 
         try {
-           const response = await fetch('http://localhost:5000/api/register-donor', // Change localhost to 127.0.0.1
+           const response = await fetch('http://localhost:5000/api/register-donor', 
         {
             method: 'POST',
             body: formData,
@@ -32,7 +32,7 @@ const DonorRegister = () => {
                 alert("Success! Your ID is submitted. Please wait for Admin verification.");
                 navigate('/login');
             } else {
-                alert("Error: " + data.message);
+                alert(data.message || "Something went wrong");
             }
 
         } catch (error) {

@@ -13,6 +13,11 @@ import PetListing from './Components/PetListing';
 import DonorDashboard from './Components/DonorDashboard';
 import AdopterDashboard from './Components/AdopterDashboard';
 import AdopterPetProfile from './Components/AdopterPetProfile';
+import MyApplications from './Components/MyApplications';
+import Favourites from './Components/Favourites';
+import Settings from './Components/Settings';
+import ExplorePets from './Components/ExplorePets';
+// import Messages from './Components/Messages';
 
 const router = createBrowserRouter([
   {
@@ -75,6 +80,26 @@ const router = createBrowserRouter([
     path: "/pet-profile/:id",
     element: <AdopterPetProfile />
   },
+  {
+    path: "/my-inquiries",
+    element: <MyApplications/>
+  },
+  {
+    path: "/favourites",
+    element: <Favourites/>
+  },
+  {
+    path: "/settings",
+    element: <Settings/>
+  },
+  {
+    path: "/explore-pets",
+    element: <ExplorePets/>
+  }
+  // {
+  //   path: "/messages",
+  //   element: <Messages/>
+  // }
 ]);
 
 function App() {

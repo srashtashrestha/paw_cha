@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+.adopter-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-cream);
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-dark);
+}
+
+/* --- SIDEBAR --- */
+.adopter-sidebar {
+  width: 260px;
+  background: var(--sidebar-white);
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  border-right: 1px solid rgba(0,0,0,0.04);
+  z-index: 100;
+  box-sizing: border-box; /* Ensures padding doesn't push width out */
+}
+
+.logo-area {
+  margin-bottom: 3.5rem;
+  padding-left: 0.5rem;
+}
+
+.nav-logo {
+  height: 52px;
+  cursor: pointer;
+}
+
+.adopter-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  flex-grow: 1;
+}
+
+/* Base button styles for both nav and footer */
+.adopter-nav button, 
+.footer-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: var(--inner-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  width: 100%; 
+  text-align: left;
+  box-sizing: border-box;
+}
+
+/* UPDATED: Active state that works for BOTH Nav and Settings footer button */
+.adopter-nav button.active,
+.footer-link.active {
+  background: var(--primary-gold);
+  color: var(--text-dark) !important; /* Forces color change even for footer links */
+  font-weight: 600;
+}
+
+.adopter-nav button:hover:not(.active),
+.footer-link:hover:not(.active) {
+  background: #f8f8f8;
+}
+
+.sidebar-footer {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-link {
+  font-size: 0.95rem; /* Keeps footer links slightly smaller as per your original design */
+}
+
+.footer-link.logout {
+  color: #e53935;
+  gap: 12px;
+}
+
+.footer-link.logout:hover {
+  background: #fff5f5;
+}
+
+/* --- MAIN CONTENT ADJUSTMENT --- */
+.adopter-main {
+  margin-left: 260px; 
+  width: calc(100% - 260px);
+  padding: 3rem 4rem;
+  box-sizing: border-box;
+}

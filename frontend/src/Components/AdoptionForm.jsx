@@ -13,14 +13,12 @@ const AdoptionForm = ({
     setAdditionalInfo, 
     applying 
 }) => {
-    const { user } = useAuth();
-    
-    const adopterName = user?.role === 'adopter' ? user.name : 'Unauthorized User';
-    const adopterEmail = user?.role === 'adopter' ? user.email : 'No Adopter Email Found';
-
+    const { user, logout } = useAuth(); // Added logout for 401 handling
     const [phone, setPhone] = useState('');
 
-    // --- FUNCTIONAL SUBMIT HANDLER ---
+    const adopterName = user?.fullName || user?.name || 'Unauthorized User';
+    const adopterEmail = user?.email || 'No Email Found';
+
     const handleFormSubmit = async (e) => {
         e.preventDefault(); 
 
@@ -30,32 +28,36 @@ const AdoptionForm = ({
             return;
         }
 
-        if (user?.role !== 'adopter') {
+        if (!user || user.role !== 'adopter') {
             alert("Only logged-in adopters can submit applications.");
             return;
         }
 
-        // 2. Construct the full data object
-        // FIXED: donorId logic to match the Pet Schema (using pet.donorId)
+        // 2. Construct the payload
+        // Ensure donorId is extracted correctly as a string ID
+        const rawDonorId = pet.donorId?._id || pet.donorId || pet.ownerId || pet.userId;
+        
         const submissionPayload = {
             petId: pet._id || pet.id,
             petName: pet.name,
-            // Logic: Check for donorId._id (if populated) or donorId (if string) or fallback to ownerId/userId
-            donorId: pet.donorId?._id || pet.donorId || pet.ownerId || pet.userId, 
+            donorId: rawDonorId, 
             adopterId: user.id || user._id, 
             adopterName: adopterName,
             adopterEmail: adopterEmail,
             phone: phone,
             motivation: motivation,
             additionalInfo: additionalInfo,
-            status: 'pending',
-            submittedAt: new Date().toISOString()
+            status: 'pending'
         };
 
-        // 3. API Call Logic
+        // 3. API Call
         try {
-            // Trigger the parent's applying state if passed
-            if (onSubmit) onSubmit(submissionPayload);
+            // If the parent component handles the API via onSubmit, call it and return
+            // Otherwise, proceed with the local fetch logic below
+            if (onSubmit) {
+                onSubmit(submissionPayload);
+                return; 
+            }
 
             const response = await fetch("http://localhost:5000/api/inquiries/apply", {
                 method: "POST",
@@ -66,17 +68,23 @@ const AdoptionForm = ({
                 body: JSON.stringify(submissionPayload)
             });
 
+            if (response.status === 401) {
+                alert("Session expired. Please login again.");
+                logout();
+                return;
+            }
+
             const result = await response.json();
 
             if (result.success) {
                 alert("Application submitted successfully!");
-                onClose(); // Close modal on success
+                onClose();
             } else {
-                alert("Server Error: " + (result.message || "Failed to send application"));
+                alert("Error: " + (result.message || "Failed to send application"));
             }
         } catch (error) {
             console.error("Submission Error:", error);
-            alert("Connection Error: Check if your backend server is running.");
+            alert("Connection Error: Is the backend server running at localhost:5000?");
         }
     };
 
@@ -98,16 +106,16 @@ const AdoptionForm = ({
                     <div className="summary-details">
                         <h3>{pet.name}</h3>
                         <p className="pet-meta">{pet.age} yrs | {pet.breed || pet.type}</p>
-                        <p className="pet-loc"><MapPin size={14} /> {pet.location || 'Location not specified'}</p>
+                        <p className="pet-loc"><MapPin size={14} /> {pet.location || 'Kathmandu'}</p>
                     </div>
                 </div>
 
                 <div className="reg-notice-banner">
-                    <p>We'll use your <span className="text-purple">registration details</span> to apply. You can review them below.</p>
+                    <p>Using your <span className="text-purple">adopter profile</span> for this application.</p>
                 </div>
 
                 <div className="info-card">
-                    <div className="info-card-header">Personal Information</div>
+                    <div className="info-card-header">Your Contact Details</div>
                     <div className="info-card-content">
                         <div className="fixed-field">
                             <span className="field-label">Name:</span>
@@ -119,13 +127,14 @@ const AdoptionForm = ({
                         </div>
                         
                         <div className="optional-phone-section">
-                            <label>Phone (Optional)</label>
+                            <label>Contact Number (Required for follow-up)</label>
                             <input 
                                 type="text" 
                                 className="bento-input-field"
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
                                 placeholder="+977 98XXXXXXXX"
+                                required
                             />
                         </div>
                     </div>
@@ -134,23 +143,23 @@ const AdoptionForm = ({
                 <div className="form-input-section">
                     <div className="input-block">
                         <label>
-                            Why do you think {pet.name} is good for you? <span className="mandatory-star">*</span>
+                            Why do you want to adopt {pet.name}? <span className="mandatory-star">*</span>
                         </label>
                         <textarea 
                             className="bento-textarea"
                             value={motivation}
                             onChange={(e) => setMotivation(e.target.value)}
-                            placeholder="Write your motivation here..."
+                            placeholder="Tell the donor about your home and experience with pets..."
                         />
                     </div>
 
                     <div className="input-block">
-                        <label>Anything else you'd like the shelter to know? (Optional)</label>
+                        <label>Additional Notes (Optional)</label>
                         <textarea 
                             className="bento-textarea"
                             value={additionalInfo}
                             onChange={(e) => setAdditionalInfo(e.target.value)}
-                            placeholder="Write a few sentences..."
+                            placeholder="Any specific questions for the donor?"
                         />
                     </div>
                 </div>
@@ -160,11 +169,11 @@ const AdoptionForm = ({
                         className="submit-app-btn" 
                         onClick={handleFormSubmit} 
                         disabled={applying}
-                        style={{ cursor: applying ? 'not-allowed' : 'pointer' }}
+                        style={{ opacity: applying ? 0.7 : 1 }}
                     >
-                        {applying ? 'Submitting...' : 'Submit Application'}
+                        {applying ? 'Submitting...' : 'Confirm Application'}
                     </button>
-                    <button className="save-later-btn" onClick={onClose}>Save & Finish Later</button>
+                    <button className="save-later-btn" onClick={onClose}>Cancel</button>
                 </div>
             </div>
         </div>

@@ -8,6 +8,7 @@
   --text-dark: #1a1a1a;
   --text-muted: #666666;
   --accent-purple: #7c4dff;
+  --deep-brown: #332B22;
   --card-radius: 24px;
   --inner-radius: 14px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -19,94 +20,6 @@
   padding: 0;
 }
 
-.adopter-container {
-  display: flex;
-  min-height: 100vh;
-  background-color: var(--bg-cream);
-  font-family: 'Outfit', sans-serif;
-  color: var(--text-dark);
-}
-
-/* --- SIDEBAR --- */
-.adopter-sidebar {
-  width: 260px;
-  background: var(--sidebar-white);
-  padding: 2.5rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  height: 100vh;
-  border-right: 1px solid rgba(0,0,0,0.04);
-  z-index: 100;
-}
-
-.logo-area {
-  margin-bottom: 3.5rem;
-  padding-left: 0.5rem;
-}
-
-.nav-logo {
-  height: 52px;
-}
-
-.adopter-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  flex-grow: 1;
-}
-
-.adopter-nav button {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 20px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-weight: 500;
-  font-size: 1rem;
-  border-radius: var(--inner-radius);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.adopter-nav button.active {
-  background: var(--primary-gold);
-  color: var(--text-dark);
-  font-weight: 600;
-}
-
-.adopter-nav button:hover:not(.active) {
-  background: #f8f8f8;
-}
-
-.sidebar-footer {
-  border-top: 1px solid #f0f0f0;
-  padding-top: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.footer-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.footer-link.logout {
-  color: #e53935;
-}
-
-/* --- MAIN CONTENT --- */
 .adopter-main {
   margin-left: 260px;
   width: calc(100% - 260px);
@@ -117,7 +30,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3rem; /* Increased margin since steps are gone */
+  margin-bottom: 3rem;
 }
 
 .welcome-section h1 {
@@ -187,9 +100,14 @@
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
+  flex-shrink: 0;
 }
 
 /* --- PET LISTINGS SECTION --- */
+.listings-section {
+  position: relative;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -219,19 +137,57 @@
   border-color: var(--primary-gold);
 }
 
+/* --- HORIZONTAL SCROLL UPDATES --- */
 .pets-scroll-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
   gap: 2.5rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 10px 5px 30px 5px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.pets-scroll-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .pet-item-card {
+  flex: 0 0 320px;
   background: white;
   border-radius: var(--card-radius);
   padding: 14px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.02);
   transition: var(--transition);
 }
+
+.scroll-arrow-btn {
+  position: absolute;
+  top: 55%;
+  transform: translateY(-50%);
+  background: var(--deep-brown);
+  color: var(--primary-gold);
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  transition: var(--transition);
+}
+
+.scroll-arrow-btn:hover {
+  background: var(--primary-gold);
+  color: var(--deep-brown);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.scroll-arrow-btn.left { left: -25px; }
+.scroll-arrow-btn.right { right: -25px; }
 
 .pet-item-card:hover {
   transform: translateY(-8px);
@@ -274,9 +230,7 @@
   color: var(--accent-purple);
 }
 
-.pet-info {
-  padding: 0 10px 10px;
-}
+.pet-info { padding: 0 10px 10px; }
 
 .pet-info h3 {
   font-size: 1.4rem;
@@ -284,10 +238,6 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
-}
-
-.pet-info h3::before {
-  font-size: 1rem;
 }
 
 .pet-specs {
@@ -324,9 +274,9 @@
 }
 
 .status-msg {
-  grid-column: 1 / -1;
   text-align: center;
   padding: 5rem;
+  width: 100%;
   color: var(--text-muted);
   font-size: 1.1rem;
 }

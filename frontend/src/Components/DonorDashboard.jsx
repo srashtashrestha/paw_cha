@@ -21,7 +21,7 @@ const DonorDashboard = () => {
         lovesLikes: '', reasonForAdoption: ''
     });
 
-    const donorName = user?.fullName || 'Donor';
+    const donorName = user?.name || 'Donor';
 
     // --- FETCHING DATA ---
 
