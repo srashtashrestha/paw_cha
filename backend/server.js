@@ -6,6 +6,10 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const nodemailer = require('nodemailer');
+const http = require('http');
+const Message = require("./models/Messages"); 
+const Chat = require("./models/Chat");
+const { Server } = require('socket.io');
 
 const app = express();
 const Notification = require("./models/Notifications");
@@ -42,6 +46,7 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, default: "donor" },
     profilePic: { type: [String], default: [] },
+    favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pet' }],
     idCardPath: { type: String },
     isVerified: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
@@ -101,6 +106,34 @@ const authenticate = (req, res, next) => {
     }
 };
 
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: { origin: "http://localhost:3000" }
+});
+
+const resolveChatId = (payload = {}) => payload.chatId || payload.inquiryId;
+
+io.on('connection', (socket) => {
+    socket.on('join_chat', (chatId) => {
+        const room = String(chatId);
+        socket.join(room);
+        console.log(`User joined room: ${room}`);
+    });
+
+    socket.on('send_message', (data) => {
+        const chatId = resolveChatId(data);
+        if (!chatId) return;
+
+        const room = String(chatId);
+        io.to(room).emit('receive_message', {
+            ...data,
+            chatId,
+            createdAt: new Date() 
+        });
+    });
+});
+
+server.listen(5000, () => console.log("Server running on port 5000"));
 
 // ================= 5. USER SETTINGS ROUTES =================
 
@@ -178,7 +211,7 @@ app.post("/api/login", async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user._id, role: user.role, email: user.email }, 
+            { id: user._id, role: user.role, email: user.email },
             SECRET_KEY, 
             { expiresIn: "7d" } 
         );
@@ -275,12 +308,124 @@ app.get("/api/pets/:id", async (req, res) => {
     }
 });
 
+// Update an existing pet listing
+app.put("/api/pets/update/:id", authenticate, upload.array("petImages", 4), async (req, res) => {
+    try {
+        const petId = req.params.id;
+        const updates = { ...req.body };
+
+        // If new images are uploaded, update the images array
+        if (req.files && req.files.length > 0) {
+            updates.images = req.files.map(file => file.filename);
+        }
+
+        const updatedPet = await Pet.findOneAndUpdate(
+            { _id: petId, donorId: req.user.id }, // Security: Ensure only the owner can edit
+            updates,
+            { new: true }
+        );
+
+        if (!updatedPet) {
+            return res.status(404).json({ success: false, message: "Pet not found or unauthorized" });
+        }
+
+        res.json({ success: true, pet: updatedPet });
+    } catch (error) {
+        console.error("Update Pet Error:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+app.delete("/api/pets/delete/:id", authenticate, async (req, res) => {
+    try {
+        const pet = await Pet.findOneAndDelete({ _id: req.params.id, donorId: req.user.id });
+        if (!pet) return res.status(404).json({ success: false, message: "Pet not found" });
+        
+        res.json({ success: true, message: "Listing deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.get("/api/adopter/my-inquiries", authenticate, async (req, res) => {
     try {
-        const inquiries = await Inquiry.find({ adopterId: req.user.id }).populate('petId').sort({ createdAt: -1 });
+        const inquiries = await Inquiry.find({ adopterId: req.user.id })
+            .populate('petId')
+            .populate('donorId', 'fullName email profilePic')
+            .populate('adopterId', 'fullName email profilePic')
+            .sort({ createdAt: -1 });
         res.json({ success: true, inquiries });
     } catch (error) {
         res.status(500).json({ success: false });
+    }
+});
+
+app.get("/api/adopter/favorites", authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('favorites');
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.json({
+            success: true,
+            favorites: (user.favorites || []).map((petId) => petId.toString())
+        });
+    } catch (error) {
+        console.error("Fetch favorites error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+app.post("/api/adopter/favorites", authenticate, async (req, res) => {
+    try {
+        const { petId } = req.body;
+
+        if (!petId) {
+            return res.status(400).json({ success: false, message: "petId is required" });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { $addToSet: { favorites: petId } },
+            { new: true }
+        ).select('favorites');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.json({
+            success: true,
+            favorites: (user.favorites || []).map((favoriteId) => favoriteId.toString())
+        });
+    } catch (error) {
+        console.error("Add favorite error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+app.delete("/api/adopter/favorites/:petId", authenticate, async (req, res) => {
+    try {
+        const { petId } = req.params;
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { $pull: { favorites: petId } },
+            { new: true }
+        ).select('favorites');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.json({
+            success: true,
+            favorites: (user.favorites || []).map((favoriteId) => favoriteId.toString())
+        });
+    } catch (error) {
+        console.error("Remove favorite error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 });
 
@@ -297,7 +442,7 @@ app.get("/api/donor/inquiries", authenticate, async (req, res) => {
     try {
         const inquiries = await Inquiry.find({ donorId: req.user.id })
             .populate('petId', 'name images')
-            .populate('adopterId', 'fullName email')
+            .populate('adopterId', 'fullName email profilePic')
             .sort({ createdAt: -1 });
         res.json({ success: true, inquiries });
     } catch (error) {
@@ -305,46 +450,48 @@ app.get("/api/donor/inquiries", authenticate, async (req, res) => {
     }
 });
 
-// app.put("/api/inquiries/status/:id", authenticate, async (req, res) => {
-//     try {
-//         const inquiry = await Inquiry.findOneAndUpdate(
-//             { _id: req.params.id, donorId: req.user.id },
-//             { status: req.body.status },
-//             { new: true }
-//         );
-//         res.json({ success: true, inquiry });
-//     } catch (error) {
-//         res.status(500).json({ success: false });
-//     }
-// });
-
 app.put("/api/inquiries/status/:id", authenticate, async (req, res) => {
     try {
         const { status } = req.body;
+        const inquiryId = req.params.id;
 
-        // 1. Update the status and populate pet details for the notification/email
         const inquiry = await Inquiry.findOneAndUpdate(
             { _id: req.params.id, donorId: req.user.id },
             { status: status },
             { new: true }
-        ).populate('petId', 'name'); // We need the pet's name for the message
+        ).populate('petId', 'name');
 
         if (!inquiry) {
             return res.status(404).json({ success: false, message: "Inquiry not found" });
         }
 
-        // 2. Only trigger notifications if the status is changed to 'approved'
         if (status === 'approved') {
-            // A. Create a Database Notification for the Adopter
+            const autoMsgText = `Hi ${inquiry.adopterName}! I have approved your application for ${inquiry.petId.name}. Let's chat!`;
+
+            const autoMessage = new Message({
+                chatId: inquiryId,
+                senderId: req.user.id, 
+                text: autoMsgText
+            });
+            await autoMessage.save();
+
+            const populatedAutoMessage = await Message.findById(autoMessage._id)
+                .populate('senderId', 'fullName profilePic');
+
+            io.to(inquiryId.toString()).emit('receive_message', populatedAutoMessage);
+        }
+
+        if (status === 'approved' || status === 'rejected') {
             const newNotif = new Notification({
                 recipient: inquiry.adopterId,
-                type: 'approval',
-                message: `Congratulations! Your application for ${inquiry.petId.name} has been approved. You can now start a chat with the donor.`,
+                type: status === 'approved' ? 'approval' : 'rejection',
+                message: status === 'approved' 
+                    ? `Congratulations! Your application for ${inquiry.petId.name} was approved.`
+                    : `Update: Your application for ${inquiry.petId.name} was not accepted.`,
                 petId: inquiry.petId._id
             });
             await newNotif.save();
 
-            // B. Send the Email via Nodemailer
             let transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: { 
@@ -353,18 +500,25 @@ app.put("/api/inquiries/status/:id", authenticate, async (req, res) => {
                 }
             });
 
+            // Dynamic content based on status
+            const isApproved = status === 'approved';
             const emailHtml = `
                 <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                    <h2 style="color: #7c4dff;">Application Approved! 🐾</h2>
+                    <h2 style="color: ${isApproved ? '#7c4dff' : '#d32f2f'};">
+                        Application ${isApproved ? 'Approved! 🐾' : 'Update'}
+                    </h2>
                     <p>Hi <b>${inquiry.adopterName}</b>,</p>
-                    <p>Great news! The donor has approved your request to adopt <b>${inquiry.petId.name}</b>.</p>
-                    <p>They are looking forward to hearing from you. Log in to your dashboard to start the conversation.</p>
+                    <p>${isApproved 
+                        ? `Great news! The donor has approved your request to adopt <b>${inquiry.petId.name}</b>.` 
+                        : `Thank you for your interest in <b>${inquiry.petId.name}</b>. Unfortunately, the donor has decided to move forward with another applicant at this time.`
+                    }</p>
+                    ${isApproved ? `
                     <div style="margin-top: 25px;">
                         <a href="http://localhost:3000/adopter-dashboard" 
                            style="background-color: #7c4dff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
                            Chat with Donor
                         </a>
-                    </div>
+                    </div>` : ''}
                     <p style="margin-top: 30px; font-size: 0.8em; color: #666;">This is an automated message from PawCha.</p>
                 </div>
             `;
@@ -372,7 +526,9 @@ app.put("/api/inquiries/status/:id", authenticate, async (req, res) => {
             await transporter.sendMail({
                 from: '"PawCha Support" <srashtashr06@gmail.com>',
                 to: inquiry.adopterEmail,
-                subject: `Your application for ${inquiry.petId.name} was approved!`,
+                subject: isApproved 
+                    ? `Your application for ${inquiry.petId.name} was approved!` 
+                    : `Update regarding your application for ${inquiry.petId.name}`,
                 html: emailHtml
             });
         }
@@ -396,12 +552,69 @@ app.get("/api/notifications", authenticate, async (req, res) => {
     }
 });
 
+// Add this to server.js
+app.post("/api/messages/send", authenticate, async (req, res) => {
+    try {
+        const { chatId: incomingChatId, inquiryId, text } = req.body;
+        const chatId = resolveChatId({ chatId: incomingChatId, inquiryId });
+
+        if (!chatId || !text?.trim()) {
+            return res.status(400).json({ success: false, message: "chatId and text are required" });
+        }
+
+        const newMessage = new Message({
+            chatId,
+            senderId: req.user.id,
+            text: text.trim()
+        });
+
+        await newMessage.save();
+
+        const populatedMsg = await Message.findById(newMessage._id)
+            .populate('senderId', 'fullName profilePic');
+
+        io.to(chatId.toString()).emit('receive_message', populatedMsg);
+
+        res.json({ success: true, newMessage: populatedMsg });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+app.get("/api/messages/:chatId", authenticate, async (req, res) => {
+    try {
+        // We add .populate('senderId') so the frontend gets an object with an _id
+        const messages = await Message.find({ chatId: req.params.chatId })
+            .populate('senderId', 'fullName profilePic') 
+            .sort({ createdAt: 1 });
+            
+        res.json({ success: true, messages });
+    } catch (error) {
+        console.error("Fetch Messages Error:", error);
+        res.status(500).json({ success: false });
+    }
+});
+
 // Mark notification as read
 app.put("/api/notifications/read/:id", authenticate, async (req, res) => {
     try {
         await Notification.findByIdAndUpdate(req.params.id, { read: true });
         res.json({ success: true });
     } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// Mark ALL notifications as read for the logged-in user
+app.put("/api/notifications/mark-all-read", authenticate, async (req, res) => {
+    try {
+        await Notification.updateMany(
+            { recipient: req.user.id, read: false },
+            { read: true }
+        );
+        res.json({ success: true, message: "All notifications marked as read" });
+    } catch (error) {
+        console.error("Mark all read error:", error);
         res.status(500).json({ success: false });
     }
 });
@@ -455,7 +668,7 @@ app.post("/api/admin-login", (req, res) => {
     const { email, password } = req.body;
     if (email === "admin@petportal.com" && password === "admin123") {
         const token = jwt.sign({ role: "admin" }, SECRET_KEY, { expiresIn: "2h" });
-        return res.json({ success: true, token });
+        return res.json({ success: true, token }); // Fixed: added success: true
     }
     return res.status(401).json({ success: false });
 });
@@ -516,6 +729,6 @@ app.delete("/api/admin/reject-donor/:id", async (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(5000, () => {
-    console.log("Server running on http://localhost:5000"); 
-});
+// app.listen(5000, () => {
+//     console.log("Server running on http://localhost:5000"); 
+// });

@@ -30,34 +30,42 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = (userData) => {
-        localStorage.clear(); 
-        
-        const name = userData.fullName || userData.name || "";
-        
-        // Ensure the incoming pfp is handled as an array
-        const pfpArray = Array.isArray(userData.profilePic) 
-            ? userData.profilePic 
-            : (userData.profilePic ? [userData.profilePic] : []);
+    // 1. Clear previous session
+    localStorage.clear(); 
 
-        setUser({
-            token: userData.token,
-            role: userData.role,
-            name: name,
-            email: userData.email,
-            id: userData.id || userData._id,
-            profilePic: pfpArray 
-        });
+    // 2. Find the ID (from flat object or nested user object)
+    const detectedId = userData.id || userData._id || userData.user?._id || userData.user?.id;
 
-        localStorage.setItem('token', userData.token);
-        localStorage.setItem('role', userData.role);
-        localStorage.setItem('displayName', name);
-        localStorage.setItem('userEmail', userData.email);
-        localStorage.setItem('userId', userData.id || userData._id);
-        // Store array as a comma-separated string
-        localStorage.setItem('profilePic', pfpArray.join(','));
+    if (!detectedId) {
+        console.error("Login failed: No valid User ID detected in response", userData);
+        return;
+    }
+
+    const name = userData.fullName || userData.name || "";
+    const pfpArray = Array.isArray(userData.profilePic) 
+        ? userData.profilePic 
+        : (userData.profilePic ? [userData.profilePic] : []);
+
+    // 3. Update React State
+    const userObj = {
+        token: userData.token,
+        role: userData.role,
+        name: name,
+        email: userData.email,
+        id: detectedId, // Using the detected ID
+        profilePic: pfpArray
     };
+    setUser(userObj);
 
-    // Updates user state without logging out
+    // 4. Update LocalStorage (Only one setItem per key!)
+    localStorage.setItem('token', userData.token);
+    localStorage.setItem('role', userData.role);
+    localStorage.setItem('displayName', name);
+    localStorage.setItem('userEmail', userData.email);
+    localStorage.setItem('userId', detectedId); // The important one
+    localStorage.setItem('profilePic', pfpArray.join(','));
+};
+
     const updateUser = (updatedData) => {
         setUser(prev => {
             if (!prev) return null;
@@ -65,7 +73,6 @@ export const AuthProvider = ({ children }) => {
             const newName = updatedData.fullName || updatedData.name || prev.name;
             const newEmail = updatedData.email || prev.email;
             
-            // Handle profilePic as an array during update
             let newPfp = prev.profilePic;
             if (updatedData.profilePic !== undefined) {
                 newPfp = Array.isArray(updatedData.profilePic) 
@@ -73,7 +80,6 @@ export const AuthProvider = ({ children }) => {
                     : [updatedData.profilePic];
             }
 
-            // Sync to LocalStorage
             localStorage.setItem('displayName', newName);
             localStorage.setItem('userEmail', newEmail);
             localStorage.setItem('profilePic', newPfp.join(','));

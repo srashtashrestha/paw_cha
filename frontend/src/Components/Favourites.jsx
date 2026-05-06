@@ -13,16 +13,26 @@ const Favourites = () => {
     const { user } = useAuth(); 
 
     useEffect(() => {
-        // 1. Get IDs from localStorage
-        const savedFavs = JSON.parse(localStorage.getItem('pawcha_favorites') || '[]');
-        setFavorites(savedFavs);
-
-        // 2. Fetch all pets to match the IDs
         const fetchPets = async () => {
+            if (!user?.token) {
+                setLoading(false);
+                return;
+            }
+
             try {
-                const res = await fetch("http://localhost:5000/api/admin/all-pets");
-                const data = await res.json();
+                const [petsRes, favoritesRes] = await Promise.all([
+                    fetch("http://localhost:5000/api/admin/all-pets"),
+                    fetch("http://localhost:5000/api/adopter/favorites", {
+                        headers: {
+                            'Authorization': `Bearer ${user.token}`
+                        }
+                    })
+                ]);
+
+                const data = await petsRes.json();
+                const favoritesData = await favoritesRes.json();
                 if (data.success) setAllPets(data.pets);
+                if (favoritesData.success) setFavorites(favoritesData.favorites || []);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -30,7 +40,7 @@ const Favourites = () => {
             }
         };
         fetchPets();
-    }, []);
+    }, [user?.token]);
 
 const adopterName = user?.name || 'User';
 

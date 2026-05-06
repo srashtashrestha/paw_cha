@@ -1,3 +1,26 @@
+:root {
+    --primary-gold: #e6c273;
+    --dark-gold: #d4b062;
+    --warm-cream: #fcfbf7;
+    --text-dark: #1a1a1a;
+    --text-muted: #666;
+    --border-light: #f0f0f0;
+    --card-radius: 24px;
+    --panel-radius: 28px;
+    --field-radius: 18px;
+    --pill-radius: 50px;
+    --card-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+    --lift-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    --button-shadow: 0 5px 15px rgba(230, 194, 115, 0.3);
+    --soft-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    --transition: all 0.3s ease;
+    --bounce-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --status-pending-bg: #fff3e0;
+    --status-pending-text: #ef6c00;
+    --status-approved-bg: #e8f5e9;
+    --status-approved-text: #2e7d32;
+}
+
 .explore-grid-section {
     padding: 20px 0;
     width: 100%;
@@ -12,33 +35,47 @@
 }
 
 .back-btn {
-    background: none;
-    border: none;
+    background: #fff;
+    border: 1px solid var(--border-light);
     cursor: pointer;
     margin-right: 10px;
     display: flex;
     align-items: center;
-    color: #333;
+    justify-content: center;
+    color: var(--text-dark);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    transition: var(--bounce-transition);
+}
+
+.back-btn:hover {
+    background: var(--warm-cream);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
 }
 
 /* Ensure the card styling remains consistent with your dashboard */
 .pet-item-card {
     background: white;
-    border-radius: 20px;
+    border-radius: var(--card-radius);
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    transition: transform 0.2s;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .pet-item-card:hover {
     transform: translateY(-5px);
+    box-shadow: var(--lift-shadow);
 }
 
 /* --- MAIN LAYOUT --- */
 .adopter-container {
     display: flex;
     min-height: 100vh;
-    background-color: #fcfbf7; /* Light cream background */
+    background-color: var(--warm-cream);
 }
 
 .adopter-main {
@@ -52,9 +89,9 @@
     position: relative; /* Anchors the absolute close button */
     background: white;
     padding: 30px;
-    border-radius: 28px;
+    border-radius: var(--panel-radius);
     margin-bottom: 30px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--card-shadow);
     border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
@@ -68,13 +105,13 @@
 .filter-header h3 {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #1a1a1a;
+    color: var(--text-dark);
     margin: 0;
 }
 
 .close-filter {
-    background: #f5f5f5;
-    border: none;
+    background: #fff;
+    border: 1px solid var(--border-light);
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -82,8 +119,15 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #666;
-    transition: all 0.3s ease;
+    color: var(--text-muted);
+    transition: var(--bounce-transition);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.close-filter:hover {
+    background: var(--warm-cream);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
 }
 
 /* --- FILTER ROWS --- */
@@ -101,17 +145,17 @@
 
 .filter-input {
     width: 100%;
-    padding: 15px 20px;
-    border-radius: 14px;
+    padding: 14px 20px;
+    border-radius: var(--field-radius);
     border: 1.5px solid #eee;
     font-size: 0.95rem;
     outline: none;
     background-color: #fafafa;
-    transition: all 0.3s ease;
+    transition: var(--transition);
 }
 
 .filter-input:focus {
-    border-color: #e6c273; /* Gold focus */
+    border-color: var(--primary-gold);
     background-color: #fff;
     box-shadow: 0 0 0 4px rgba(230, 194, 115, 0.1);
 }
@@ -157,7 +201,7 @@
     -webkit-appearance: none;
     height: 24px;
     width: 24px;
-    background: #e6c273; 
+    background: var(--primary-gold); 
     border-radius: 24px;
     cursor: pointer;
     pointer-events: auto;
@@ -176,31 +220,40 @@
 
 .filter-search-btn {
     flex: 2;
-    background: #e6c273; /* Primary Gold */
-    color: #1a1a1a;
+    background: var(--primary-gold);
+    color: var(--text-dark);
     border: none;
     padding: 16px;
-    border-radius: 50px;
+    border-radius: var(--pill-radius);
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--bounce-transition);
 }
 
 .filter-clear-btn {
     flex: 1;
-    background: #f8f9fa;
-    color: #666;
+    background: #fff;
+    color: var(--text-muted);
     border: 1.5px solid #eee;
     padding: 16px;
-    border-radius: 50px;
+    border-radius: var(--pill-radius);
     font-weight: 600;
     cursor: pointer;
+    transition: var(--bounce-transition);
 }
 
 .filter-search-btn:hover {
-    background: #d4b062;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(230, 194, 115, 0.3);
+    background: var(--dark-gold);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
+}
+
+.filter-clear-btn:hover {
+    background: var(--warm-cream);
+    border-color: var(--primary-gold);
+    color: var(--text-dark);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--soft-shadow);
 }
 
 .animate-slide-down {
@@ -225,15 +278,15 @@
 
 .pet-item-card {
     background: white;
-    border-radius: 24px;
+    border-radius: var(--card-radius);
     overflow: hidden;
-    transition: all 0.3s ease;
-    border: 1px solid #f0f0f0;
+    transition: var(--transition);
+    border: 1px solid var(--border-light);
 }
 
 .pet-item-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    box-shadow: var(--lift-shadow);
 }
 
 .notification-wrapper {
@@ -258,11 +311,11 @@
     right: 0;
     width: 300px;
     background: white;
-    border-radius: 18px;
+    border-radius: var(--field-radius);
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     padding: 15px;
     z-index: 1000;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-light);
 }
 
 .notif-item {
@@ -272,15 +325,50 @@
 }
 
 .notif-item.unread {
-    background: #fcfbf7; /* Light highlight for unread */
+    background: var(--warm-cream);
 }
 
 .notif-item button {
-    background: #e6c273;
+    background: var(--primary-gold);
     border: none;
-    padding: 5px 12px;
-    border-radius: 8px;
+    color: var(--text-dark);
+    padding: 8px 14px;
+    border-radius: 12px;
     font-size: 0.8rem;
     cursor: pointer;
     margin-top: 8px;
+    transition: var(--bounce-transition);
+}
+
+.notif-item button:hover {
+    background: var(--dark-gold);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
+}
+
+/* Add these to your ExplorePets.css */
+.applied-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--status-approved-bg);
+    color: var(--status-approved-text);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+}
+
+.btn-disabled {
+    background-color: #e0e0e0 !important;
+    color: #9e9e9e !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+.pet-applied {
+    opacity: 0.9;
 }

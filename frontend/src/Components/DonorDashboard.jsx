@@ -1,18 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, RefreshCcw, Mail, Phone, Calendar } from 'lucide-react';
+import { MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, RefreshCcw, Mail, Phone, Calendar, ChevronLeft, Send } from 'lucide-react';
 import './DonorDashboard.css';
 import logo from '../Assets/Logo/Logo.png'; 
+import { io } from 'socket.io-client';
+// const socket = io("http://localhost:5000");
 
 const DonorDashboard = () => {
     const { user, logout } = useAuth();
+    console.log("Full User Object from Context:", user);
+    const socket = useRef(null);
     const [activeTab, setActiveTab] = useState('inventory');
+    const [activeChat, setActiveChat] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formStep, setFormStep] = useState(1);
     const [inquiries, setInquiries] = useState([]); 
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [myPets, setMyPets] = useState([]);
     const [selectedPetId, setSelectedPetId] = useState(null);
+
+    const [chatMessages, setChatMessages] = useState([]);
+    const [newMessage, setNewMessage] = useState("");
+    const messagesEndRef = useRef(null);
 
     const [petData, setPetData] = useState({
         name: '', type: 'Dog', breed: '', age: '', weight: '',
@@ -24,6 +33,7 @@ const DonorDashboard = () => {
     const donorName = user?.name || 'Donor';
 
     // --- FETCHING DATA ---
+    
 
     const fetchMyPets = useCallback(async () => {
         if (!user?.token) return;
@@ -55,6 +65,40 @@ const DonorDashboard = () => {
         }
     }, [user?.token]);
 
+    const fetchMessages = useCallback(async (inquiryId) => {
+        if (!user?.token || !inquiryId) return;
+        try {
+            const response = await fetch(`http://localhost:5000/api/messages/${inquiryId}`, {
+                headers: { "Authorization": `Bearer ${user.token}` }
+            });
+            const result = await response.json();
+            // Check if backend returns 'messages' or 'data'
+            if (result.success) {
+                setChatMessages(result.messages || result.data || []);
+            }
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+        }
+    }, [user?.token]);
+
+    useEffect(() => {
+        if (user?.token) {
+            // Replace with your actual backend URL
+            socket.current = io("http://localhost:5000", {
+                auth: { token: user.token }
+            });
+
+            socket.current.on("connect", () => {
+                console.log("Connected to socket:", socket.current.id);
+            });
+
+            // Cleanup on unmount
+            return () => {
+                if (socket.current) socket.current.disconnect();
+            };
+        }
+    }, [user?.token]);
+
     useEffect(() => {
         if (user?.token) {
             fetchMyPets();
@@ -62,23 +106,108 @@ const DonorDashboard = () => {
         }
     }, [fetchMyPets, fetchInquiries, user?.token]);
 
+    // NEW: Effect to fetch messages when tab or activeChat changes
+    useEffect(() => {
+        if (activeTab === 'chat' && activeChat?._id) {
+            fetchMessages(activeChat._id);
+        }
+    }, [activeTab, activeChat?._id, fetchMessages]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [chatMessages]);
+
+
+useEffect(() => {
+    if (!socket.current) return;
+    if (!activeChat?._id) return;
+
+    const handleNewMessage = (msg) => {
+        const incomingChatId = String(msg.chatId || msg.inquiryId);
+        const currentChatId = String(activeChat._id);
+
+        if (incomingChatId !== currentChatId) return;
+
+        setChatMessages((prev) => {
+            const exists = prev.find((m) => {
+                if (msg._id && m._id) return m._id === msg._id;
+
+                const existingSenderId = String(m.senderId?._id || m.senderId);
+                const incomingSenderId = String(msg.senderId?._id || msg.senderId);
+
+                return (
+                    m.text === msg.text &&
+                    existingSenderId === incomingSenderId &&
+                    m.createdAt === msg.createdAt
+                );
+            });
+
+            if (exists) return prev;
+            return [...prev, msg];
+        });
+    };
+
+    socket.current.on("receive_message", handleNewMessage);
+    return () => socket.current.off("receive_message", handleNewMessage);
+}, [activeChat]);
     // --- HANDLERS ---
+
+    const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !activeChat) return;
+
+    const messageData = {
+        chatId: activeChat._id,
+        text: newMessage
+    };
+
+    const savedMsg = newMessage;
+    setNewMessage("");
+
+    try {
+        const response = await fetch("http://localhost:5000/api/messages/send", {
+            method: "POST",
+            headers: { 
+                "Authorization": `Bearer ${user.token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(messageData)
+        });
+        
+        const result = await response.json();
+        if (!result.success) {
+            setNewMessage(savedMsg);
+            alert("Message failed to send.");
+        }
+    } catch (error) {
+        console.error("Error sending message:", error);
+        setNewMessage(savedMsg);
+    }
+};
 
     const handleStatusUpdate = async (inquiryId, newStatus) => {
         if (!window.confirm(`Are you sure you want to ${newStatus} this inquiry?`)) return;
-        
+
         try {
             const response = await fetch(`http://localhost:5000/api/inquiries/status/${inquiryId}`, {
                 method: "PUT",
-                headers: { 
+                headers: {
                     "Authorization": `Bearer ${user.token}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ status: newStatus })
             });
             const result = await response.json();
+
             if (result.success) {
                 setInquiries(prev => prev.map(inv => inv._id === inquiryId ? { ...inv, status: newStatus } : inv));
+
+                if (newStatus === 'approved') {
+                    const targetInq = inquiries.find(i => i._id === inquiryId);
+                    if (targetInq) {
+                        handleMessageClick(targetInq);
+                    }
+                }
             }
         } catch (error) {
             console.error("Error updating status:", error);
@@ -117,35 +246,22 @@ const DonorDashboard = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // 1. Create FormData
         const data = new FormData();
-        Object.keys(petData).forEach(key => {
-            data.append(key, petData[key]);
-        });
-        
-        // 2. Append files
-        selectedFiles.forEach(file => {
-            data.append('petImages', file);
-        });
+        Object.keys(petData).forEach(key => data.append(key, petData[key]));
+        selectedFiles.forEach(file => data.append('petImages', file));
 
         const url = selectedPetId 
             ? `http://localhost:5000/api/pets/update/${selectedPetId}` 
             : "http://localhost:5000/api/pets/list";
 
         try {
-            // IMPORTANT: Do NOT set 'Content-Type' when sending FormData.
-            // The browser will automatically set it to 'multipart/form-data' with the correct boundary.
             const response = await fetch(url, {
                 method: selectedPetId ? "PUT" : "POST",
-                headers: { 
-                    "Authorization": `Bearer ${user.token}` 
-                },
+                headers: { "Authorization": `Bearer ${user.token}` },
                 body: data
             });
 
             const result = await response.json();
-            
             if (result.success) {
                 alert(selectedPetId ? "Pet updated successfully!" : "Pet listed successfully!");
                 closeModal();
@@ -155,7 +271,6 @@ const DonorDashboard = () => {
             }
         } catch (error) { 
             console.error("Error submitting pet:", error);
-            alert("A connection error occurred. Check the console.");
         }
     };
 
@@ -170,6 +285,89 @@ const DonorDashboard = () => {
             reasonForAdoption: pet.reasonForAdoption || ''
         });
         setIsModalOpen(true);
+    };
+
+    const handleMessageClick = (inquiry) => {
+    setActiveChat(inquiry);
+    setActiveTab('chat');
+    fetchMessages(inquiry._id);
+    
+    // Join the specific room for this inquiry
+    if (socket.current) {
+        socket.current.emit("join_chat", inquiry._id); 
+    }
+};
+
+    const renderChatInterface = () => {
+        if (!activeChat) return (
+            <div className="empty-state" style={{ textAlign: 'center', padding: '100px' }}>
+                <Send size={48} color="#d7ccc8" />
+                <p>Select an inquiry to start messaging.</p>
+            </div>
+        );
+
+        // const currentUserId = user?._id || user?.id;
+
+        return (
+            <div className="chat-interface-container">
+                <header className="chat-header">
+                    <button className="back-btn" onClick={() => setActiveTab('inquiries')}>
+                        <ChevronLeft size={20} />
+                    </button>
+                    <div className="chat-user-info">
+                        <div className="mini-avatar">{activeChat.adopterId?.fullName?.[0]}</div>
+                        <div>
+                            <h3>{activeChat.adopterId?.fullName}</h3>
+                            <p>Inquiry for {activeChat.petId?.name}</p>
+                        </div>
+                    </div>
+                </header>
+
+                <div className="chat-messages-area">
+                      {chatMessages.map((msg, index) => {
+    // 1. Get sender ID from message (handle object or string)
+    const senderId = msg.senderId?._id || msg.senderId;
+    
+    // 2. Get your ID from AuthContext (using 'id' as defined in your context)
+    const myId = user?.id;
+
+    // 3. String comparison + check for "undefined" string
+    const isSentByMe = 
+        senderId && 
+        myId && 
+        String(senderId) === String(myId) && 
+        String(myId) !== "undefined";
+
+    return (
+        <div 
+            key={msg._id || index} 
+            className={`message-wrapper ${isSentByMe ? 'sent' : 'received'}`}
+        >
+            <div className={`message-bubble ${isSentByMe ? 'sent' : 'received'}`}>
+                <p>{msg.text || msg.message}</p>
+                <span className="chat-time">
+                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+            </div>
+        </div>
+    );
+})}
+                    <div ref={messagesEndRef} />
+                </div>
+
+                <form className="chat-input-wrapper" onSubmit={handleSendMessage}>
+                    <div className="input-box">
+                        <input 
+                            type="text" 
+                            placeholder="Write a message..." 
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                        />
+                        <button type="submit" className="send-msg-btn"><Send size={18} /></button>
+                    </div>
+                </form>
+            </div>
+        );
     };
 
     return (
@@ -197,6 +395,9 @@ const DonorDashboard = () => {
                             <span className="notif-dot">{inquiries.filter(i => i.status === 'pending').length}</span>
                         )}
                     </button>
+                    <button className={activeTab === 'chat' ? 'active' : ''} onClick={() => setActiveTab('chat')}>
+                    <Send size={18} /> Messages
+                    </button>
                 </nav>
 
                 <button className="logout-btn" onClick={logout}>
@@ -205,20 +406,24 @@ const DonorDashboard = () => {
             </aside>
 
             <main className="main-content">
-                <header className="dashboard-header">
-                    <div>
-                        <h1>{activeTab === 'inventory' ? 'Manage Pet Listings' : 'Adoption Inquiries'}</h1>
-                        <p className="subtitle">Track your listings and respond to potential adopters.</p>
-                    </div>
-                    <div className="header-actions" style={{ display: 'flex', gap: '10px' }}>
-                        <button className="refresh-btn" onClick={activeTab === 'inventory' ? fetchMyPets : fetchInquiries} title="Refresh">
-                            <RefreshCcw size={18} color="#5d4037" />
-                        </button>
-                        <button className="add-pet-btn" onClick={() => { closeModal(); setIsModalOpen(true); }}>
-                            <Plus size={20} /> List a New Pet
-                        </button>
-                    </div>
-                </header>
+                {activeTab === 'chat' ? renderChatInterface() : ( 
+                    <>
+                    <header className="dashboard-header">
+                            <div>
+                                <h1>{activeTab === 'inventory' ? 'Manage Pet Listings' : 'Adoption Inquiries'}</h1>
+                                <p className="subtitle">Track your listings and respond to potential adopters.</p>
+                            </div>
+                            <div className="header-actions" style={{ display: 'flex', gap: '10px' }}>
+                                <button className="refresh-btn" onClick={activeTab === 'inventory' ? fetchMyPets : fetchInquiries}>
+                                    <RefreshCcw size={18} color="#5d4037" />
+                                </button>
+                                <button className="add-pet-btn" onClick={() => setIsModalOpen(true)}>
+                                    <Plus size={20} /> List a New Pet
+                                </button>
+                            </div>
+                        </header>
+                     </>
+                )}
 
                 {activeTab === 'inventory' ? (
                     <div className="pet-grid">
@@ -241,7 +446,7 @@ const DonorDashboard = () => {
                             </div>
                         ))}
                     </div>
-                ) : (
+                ) : activeTab === 'inquiries' ? (
                     <div className="inquiry-container">
                         {inquiries.length === 0 ? (
                             <div className="empty-state" style={{ textAlign: 'center', padding: '50px' }}>
@@ -275,37 +480,26 @@ const DonorDashboard = () => {
                                                 <p>"{inq.motivation}"</p>
                                             </div>
                                         )}
-
-                                        {inq.additionalInfo && (
-                                            <div className="additional-info-box" style={{ marginTop: '10px', fontSize: '13px', color: '#5d4037' }}>
-                                                <strong>Note:</strong> {inq.additionalInfo}
-                                            </div>
-                                        )}
                                     </div>
 
-                                    {inq.status === 'pending' && (
-                                        <div className="inquiry-footer">
-                                            <button 
-                                                className="delete-action-btn" 
-                                                onClick={() => handleStatusUpdate(inq._id, 'rejected')}
-                                            >
-                                                Reject
+                                    <div className="inquiry-footer">
+                                        {inq.status === 'pending' ? (
+                                            <>
+                                                <button className="delete-action-btn" onClick={() => handleStatusUpdate(inq._id, 'rejected')}>Reject</button>
+                                                <button className="edit-action-btn" onClick={() => handleStatusUpdate(inq._id, 'approved')}>Approve Adoption</button>
+                                            </>
+                                        ) : inq.status === 'approved' ? (
+                                            <button className="message-btn" onClick={() => handleMessageClick(inq)} style={{ backgroundColor: '#5d4037', color: 'white', padding: '8px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
+                                                <MessageSquare size={16} /> Message Adopter
                                             </button>
-                                            <button 
-                                                className="edit-action-btn" 
-                                                onClick={() => handleStatusUpdate(inq._id, 'approved')}
-                                            >
-                                                Approve Adoption
-                                            </button>
-                                        </div>
-                                    )}
+                                        ) : null}
+                                    </div>
                                 </div>
                             ))
                         )}
                     </div>
-                )}
+                ) : null}
 
-                {/* MODAL SECTION */}
                 {isModalOpen && (
                     <div className="modal-overlay">
                         <div className="modal-content">

@@ -2,16 +2,29 @@
 
 :root {
   --primary-gold: #e6c273;
-  --primary-gold-hover: #d4b062;
-  --bg-cream: #faf7f2;
+  --dark-gold: #d4b062;
+  --warm-cream: #fcfbf7;
+  --bg-cream: #fcfbf7;
   --sidebar-white: #ffffff;
   --text-dark: #1a1a1a;
-  --text-muted: #666666;
+  --text-muted: #666;
+  --border-light: #f0f0f0;
   --accent-purple: #7c4dff;
   --deep-brown: #332B22;
   --card-radius: 24px;
-  --inner-radius: 14px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --inner-radius: 18px;
+  --panel-radius: 28px;
+  --pill-radius: 50px;
+  --card-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+  --lift-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  --button-shadow: 0 5px 15px rgba(230, 194, 115, 0.3);
+  --soft-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  --transition: all 0.3s ease;
+  --bounce-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --status-pending-bg: #fff3e0;
+  --status-pending-text: #ef6c00;
+  --status-approved-bg: #e8f5e9;
+  --status-approved-text: #2e7d32;
 }
 
 * {
@@ -53,10 +66,18 @@
   display: flex;
   align-items: center;
   background: white;
-  padding: 12px 24px;
-  border-radius: 50px;
-  border: 1px solid #eee;
+  padding: 14px 24px;
+  border-radius: var(--pill-radius);
+  border: 1.5px solid #eee;
   width: 380px;
+  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.search-bar:focus-within {
+  border-color: var(--primary-gold);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(230, 194, 115, 0.1);
 }
 
 .search-bar input {
@@ -76,6 +97,15 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
+  transition: var(--bounce-transition);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.icon-btn:hover {
+  background: var(--warm-cream);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--button-shadow);
 }
 
 .user-profile {
@@ -84,10 +114,11 @@
   gap: 12px;
   background: white;
   padding: 6px 18px 6px 6px;
-  border-radius: 50px;
+  border-radius: var(--pill-radius);
   border: 1px solid #eee;
   font-weight: 600;
   font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
 .profile-initials {
@@ -121,20 +152,22 @@
 }
 
 .explore-all-btn {
-  background: transparent;
+  background: #fff;
   border: 1px solid #d1d1d1;
-  padding: 10px 24px;
-  border-radius: 50px;
+  padding: 14px 24px;
+  border-radius: var(--pill-radius);
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-dark);
   cursor: pointer;
-  transition: var(--transition);
+  transition: var(--bounce-transition);
 }
 
 .explore-all-btn:hover {
-  background: #fdf5e6;
+  background: var(--warm-cream);
   border-color: var(--primary-gold);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--soft-shadow);
 }
 
 /* --- HORIZONTAL SCROLL UPDATES --- */
@@ -157,7 +190,8 @@
   background: white;
   border-radius: var(--card-radius);
   padding: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(0,0,0,0.03);
   transition: var(--transition);
 }
 
@@ -177,13 +211,14 @@
   cursor: pointer;
   z-index: 10;
   box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-  transition: var(--transition);
+  transition: var(--bounce-transition);
 }
 
 .scroll-arrow-btn:hover {
-  background: var(--primary-gold);
+  background: var(--dark-gold);
   color: var(--deep-brown);
-  transform: translateY(-50%) scale(1.1);
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: var(--button-shadow);
 }
 
 .scroll-arrow-btn.left { left: -25px; }
@@ -191,7 +226,7 @@
 
 .pet-item-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+  box-shadow: var(--lift-shadow);
 }
 
 .pet-thumb {
@@ -222,8 +257,14 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-  transition: var(--transition);
+  transition: var(--bounce-transition);
   color: #d1d1d1;
+}
+
+.fav-overlay:hover {
+  background: var(--warm-cream);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--button-shadow);
 }
 
 .fav-overlay.is-fav {
@@ -260,17 +301,19 @@
   width: 100%;
   background: var(--primary-gold);
   border: none;
-  padding: 15px;
-  border-radius: 50px;
+  padding: 16px;
+  border-radius: var(--pill-radius);
   font-weight: 700;
   font-size: 1rem;
   color: var(--text-dark);
   cursor: pointer;
-  transition: var(--transition);
+  transition: var(--bounce-transition);
 }
 
 .view-profile-btn:hover {
-  background: var(--primary-gold-hover);
+  background: var(--dark-gold);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--button-shadow);
 }
 
 .status-msg {
@@ -279,4 +322,104 @@
   width: 100%;
   color: var(--text-muted);
   font-size: 1.1rem;
+}
+
+.notification-wrapper {
+  position: relative;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4444;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 320px;
+  background: #fff;
+  border-radius: var(--inner-radius);
+  box-shadow: var(--card-shadow);
+  padding: 15px;
+  z-index: 1000;
+  border: 1px solid var(--border-light);
+}
+
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 6px 14px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.notif-header h4 {
+  margin: 0;
+  color: var(--text-dark);
+}
+
+.unread-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary-gold);
+}
+
+.notif-item {
+  padding: 12px;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 0.9rem;
+}
+
+.notif-item.unread {
+  background: var(--warm-cream);
+}
+
+.notif-item p {
+  margin: 0 0 8px;
+  color: var(--text-dark);
+}
+
+.notif-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chat-now-btn {
+  background: var(--primary-gold);
+  border: none;
+  color: var(--text-dark);
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--bounce-transition);
+}
+
+.chat-now-btn:hover {
+  background: var(--dark-gold);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--button-shadow);
+}
+
+.notif-time {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.empty-notif {
+  padding: 30px 16px;
+  text-align: center;
+  color: var(--text-muted);
 }

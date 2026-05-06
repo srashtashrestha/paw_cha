@@ -6,7 +6,7 @@ import './LoginForm.css';
 // Importing assets
 import logo from '../Assets/Logo/Logo.png'; 
 import googleIcon from '../Assets/Logo/Google.png';
-
+  
 const LoginForm = () => {
   const [isDonor, setIsDonor] = useState(false); 
   const [email, setEmail] = useState('');
@@ -37,7 +37,8 @@ const LoginForm = () => {
           token: data.token,
           role: data.role,
           name: data.fullName,
-          email: data.email
+          email: data.email,
+          id: data.id
         });
 
         alert(`Welcome back, ${data.fullName}!`); 

@@ -1,5 +1,23 @@
 /* Settings.css */
 
+:root {
+    --primary-gold: #e6c273;
+    --dark-gold: #d4b062;
+    --warm-cream: #fcfbf7;
+    --text-dark: #1a1a1a;
+    --text-muted: #666;
+    --border-light: #f0f0f0;
+    --card-radius: 24px;
+    --panel-radius: 28px;
+    --field-radius: 18px;
+    --pill-radius: 50px;
+    --card-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+    --button-shadow: 0 5px 15px rgba(230, 194, 115, 0.3);
+    --soft-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    --transition: all 0.3s ease;
+    --bounce-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 /* 1. Global Font Update */
 * {
     font-family: 'Outfit', sans-serif;
@@ -15,11 +33,11 @@
 .settings-wide-card {
     background: white;
     padding: 4rem;
-    border-radius: 32px;
+    border-radius: var(--panel-radius);
     width: 100%;
     max-width: 1100px; 
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
-    border: 1px solid #f0f0f0;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(0, 0, 0, 0.03);
     margin-bottom: 4rem;
     box-sizing: border-box; /* Necessary for padding control */
 }
@@ -38,13 +56,13 @@
 .section-title h2 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text-dark);
     margin: 0;
 }
 
 .section-divider {
     height: 1px;
-    background: #f0f0f0;
+    background: var(--border-light);
     margin: 4rem 0;
     width: 100%;
 }
@@ -54,9 +72,11 @@
     align-items: center;
     gap: 2.5rem;
     margin-bottom: 3rem;
-    background: #fcfcfc;
+    background: #fff;
     padding: 2rem;
-    border-radius: 20px;
+    border-radius: var(--card-radius);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--soft-shadow);
 }
 
 .pfp-wrapper {
@@ -80,7 +100,7 @@
     position: absolute;
     bottom: 0;
     right: 0;
-    background: #e6c273;
+    background: var(--primary-gold);
     border: 3px solid white;
     border-radius: 50%;
     padding: 8px;
@@ -89,12 +109,13 @@
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    transition: 0.2s ease;
+    transition: var(--bounce-transition);
 }
 
 .pfp-overlay-btn:hover {
-    background-color: #d4b062;
-    transform: scale(1.1);
+    background-color: var(--dark-gold);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
 }
 
 .input-grid {
@@ -118,7 +139,7 @@
 .form-group label {
     font-size: 0.95rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-dark);
 }
 
 .input-with-icon {
@@ -139,12 +160,12 @@
 
 .form-group input {
     width: 100%;
-    padding: 16px 20px;
-    border-radius: 16px;
+    padding: 14px 20px;
+    border-radius: var(--field-radius);
     border: 1px solid #eee;
     background: #fcfcfc;
     font-size: 1rem;
-    transition: all 0.3s ease;
+    transition: var(--transition);
     box-sizing: border-box;
 }
 
@@ -157,21 +178,21 @@
 
 /* Updated Buttons */
 .save-btn {
-    background: #e6c273; 
+    background: var(--primary-gold); 
     color: #000;
     border: none;
     padding: 16px 45px;
-    border-radius: 14px;
+    border-radius: var(--pill-radius);
     font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--bounce-transition);
 }
 
 .save-btn:hover:not(:disabled) {
-    background-color: #d4b062; 
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(212, 176, 98, 0.2);
+    background-color: var(--dark-gold); 
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
 }
 
 /* NEW: Necessary loading state for button */

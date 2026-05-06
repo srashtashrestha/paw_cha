@@ -37,7 +37,8 @@ const AdminLogin = () => {
         login({
           token: data.token,
           role: 'admin',
-          name: 'Administrator'
+          name: 'Administrator',
+          id: 'admin_root'
         });
 
         alert("Welcome, Admin!");

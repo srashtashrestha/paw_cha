@@ -1,5 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 
+:root {
+  --primary-gold: #e6c273;
+  --dark-gold: #d4b062;
+  --warm-cream: #fcfbf7;
+  --bg-cream: #fcfbf7;
+  --sidebar-white: #ffffff;
+  --text-dark: #1a1a1a;
+  --text-muted: #666;
+  --border-light: #f0f0f0;
+  --inner-radius: 18px;
+  --button-shadow: 0 5px 15px rgba(230, 194, 115, 0.3);
+  --soft-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  --transition: all 0.3s ease;
+  --bounce-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 .adopter-container {
   display: flex;
   min-height: 100vh;
@@ -53,7 +69,7 @@
   font-size: 1rem;
   border-radius: var(--inner-radius);
   cursor: pointer;
-  transition: var(--transition);
+  transition: var(--bounce-transition);
   width: 100%; 
   text-align: left;
   box-sizing: border-box;
@@ -65,15 +81,19 @@
   background: var(--primary-gold);
   color: var(--text-dark) !important; /* Forces color change even for footer links */
   font-weight: 600;
+  box-shadow: var(--button-shadow);
 }
 
 .adopter-nav button:hover:not(.active),
 .footer-link:hover:not(.active) {
-  background: #f8f8f8;
+  background: var(--warm-cream);
+  color: var(--text-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--soft-shadow);
 }
 
 .sidebar-footer {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-light);
   padding-top: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -91,6 +111,7 @@
 
 .footer-link.logout:hover {
   background: #fff5f5;
+  transform: translateY(-2px);
 }
 
 /* --- MAIN CONTENT ADJUSTMENT --- */

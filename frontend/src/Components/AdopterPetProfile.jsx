@@ -50,14 +50,29 @@ const AdopterPetProfile = () => {
             }
 
             // CHECK: Has the user already applied?
-            if (user?._id) {
-                const appRes = await fetch(`http://localhost:5000/api/applications/user/${user._id}`);
+            if (user?.id && user?.token) {
+                const [appRes, favoritesRes] = await Promise.all([
+                    fetch(`http://localhost:5000/api/adopter/my-inquiries`, {
+                        headers: {
+                            'Authorization': `Bearer ${user.token}`
+                        }
+                    }),
+                    fetch(`http://localhost:5000/api/adopter/favorites`, {
+                        headers: {
+                            'Authorization': `Bearer ${user.token}`
+                        }
+                    })
+                ]);
                 const appData = await appRes.json();
+                const favoritesData = await favoritesRes.json();
                 if (appData.success) {
-                    const applied = appData.applications.some(app => 
-                        (app.petId._id || app.petId) === id
+                    const applied = (appData.inquiries || []).some(app => 
+                        String(app.petId?._id || app.petId) === String(id)
                     );
                     setHasApplied(applied);
+                }
+                if (favoritesData.success) {
+                    setIsFavorited((favoritesData.favorites || []).includes(String(id)));
                 }
             }
         } catch (error) {
@@ -67,7 +82,34 @@ const AdopterPetProfile = () => {
         }
     };
     fetchPetAndStatus();
-}, [id, user?._id]);
+}, [id, user?.id, user?.token]);
+
+    const toggleFavorite = async () => {
+        if (!user?.token || !pet?._id) return;
+
+        try {
+            const response = await fetch(
+                isFavorited
+                    ? `http://localhost:5000/api/adopter/favorites/${pet._id}`
+                    : `http://localhost:5000/api/adopter/favorites`,
+                {
+                    method: isFavorited ? 'DELETE' : 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${user.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: isFavorited ? undefined : JSON.stringify({ petId: pet._id })
+                }
+            );
+
+            const data = await response.json();
+            if (data.success) {
+                setIsFavorited((data.favorites || []).includes(String(pet._id)));
+            }
+        } catch (error) {
+            console.error("Favorite update error:", error);
+        }
+    };
 
     const handleShare = async () => {
         const shareData = {
@@ -169,7 +211,7 @@ const AdopterPetProfile = () => {
                             <h1>Meet {pet.name}</h1>
                             <div className="utility-btns">
                                 <button className="circ-action" onClick={handleShare}><Share2 size={18} /></button>
-                                <button className={`circ-action ${isFavorited ? 'is-fav' : ''}`} onClick={() => setIsFavorited(!isFavorited)}>
+                                <button className={`circ-action ${isFavorited ? 'is-fav' : ''}`} onClick={toggleFavorite}>
                                     <Heart size={18} fill={isFavorited ? "#7c4dff" : "none"} />
                                 </button>
                             </div>

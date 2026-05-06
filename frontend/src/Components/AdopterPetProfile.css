@@ -1,8 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
+:root {
+    --primary-gold: #e6c273;
+    --dark-gold: #d4b062;
+    --warm-cream: #fcfbf7;
+    --text-dark: #1a1a1a;
+    --text-muted: #666;
+    --border-light: #f0f0f0;
+    --card-radius: 24px;
+    --panel-radius: 28px;
+    --field-radius: 18px;
+    --pill-radius: 50px;
+    --card-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+    --lift-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    --button-shadow: 0 5px 15px rgba(230, 194, 115, 0.3);
+    --soft-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    --transition: all 0.3s ease;
+    --bounce-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --status-approved-bg: #e8f5e9;
+    --status-approved-text: #2e7d32;
+}
+
 /* Container & Layout */
 .pawcha-profile-container {
-    background-color: #FDFCF6;
+    background-color: var(--warm-cream);
     min-height: 100vh;
     font-family: 'Outfit', sans-serif;
     color: #333;
@@ -14,7 +35,7 @@
     align-items: center;
     padding: 1rem 4rem;
     background: white;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-light);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -34,21 +55,23 @@
 }
 
 .nav-icon-btn {
-    background: #f8f8f8;
-    border: 1px solid #eee;
+    background: #fff;
+    border: 1px solid var(--border-light);
     padding: 10px;
     border-radius: 50%;
     cursor: pointer;
-    color: #555;
+    color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: var(--bounce-transition);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
 
 .nav-icon-btn:hover {
-    background: #f0f0f0;
-    transform: translateY(-2px);
+    background: var(--warm-cream);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
 }
 
 .nav-user-profile {
@@ -83,17 +106,26 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: none;
-    border: none;
-    color: #888;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
     margin-bottom: 2rem;
-    transition: color 0.2s;
+    transition: var(--bounce-transition);
+    padding: 12px 18px;
+    border-radius: var(--pill-radius);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
-.back-link:hover { color: #333; }
+.back-link:hover {
+    color: var(--text-dark);
+    background: var(--warm-cream);
+    border-color: var(--primary-gold);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--soft-shadow);
+}
 
 /* Grid System */
 .profile-main-grid {
@@ -125,7 +157,7 @@
 
 .circ-action {
     background: white;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-light);
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -133,14 +165,17 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
-    color: #666;
+    transition: var(--bounce-transition);
+    color: var(--text-muted);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
 
 .circ-action:hover {
-    border-color: #EBC374;
-    color: #333;
-    transform: translateY(-2px);
+    background: var(--warm-cream);
+    border-color: var(--primary-gold);
+    color: var(--text-dark);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
 }
 
 .circ-action.is-fav {
@@ -159,9 +194,10 @@
 .health-card {
     background: white;
     padding: 1.5rem;
-    border-radius: 20px;
-    border: 1px solid #f0f0f0;
+    border-radius: var(--card-radius);
+    border: 1px solid var(--border-light);
     margin: 2rem 0;
+    box-shadow: var(--soft-shadow);
 }
 
 .health-card h3 { margin-top: 0; font-size: 1.1rem; color: #444; }
@@ -182,8 +218,8 @@
 }
 
 .vet-note {
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: var(--status-approved-bg);
+    color: var(--status-approved-text);
     padding: 10px 15px;
     border-radius: 12px;
     font-weight: 500;
@@ -194,10 +230,12 @@
 
 /* Description Box */
 .description-box {
-    background-color: #FFF9E5;
+    background-color: var(--warm-cream);
     padding: 2rem;
-    border-radius: 24px;
+    border-radius: var(--card-radius);
     margin: 2.5rem 0;
+    border: 1px solid rgba(230, 194, 115, 0.25);
+    box-shadow: var(--soft-shadow);
 }
 
 .description-box h4 { margin-top: 0; font-size: 1.2rem; color: #333; }
@@ -213,18 +251,20 @@
 
 .bubble-tag {
     background: white;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-light);
     padding: 8px 20px;
-    border-radius: 50px;
+    border-radius: var(--pill-radius);
     font-size: 0.85rem;
     font-weight: 500;
     color: #555;
-    transition: all 0.2s;
+    transition: var(--bounce-transition);
 }
 
 .bubble-tag:hover {
-    border-color: #EBC374;
-    background: #FFF9E5;
+    border-color: var(--primary-gold);
+    background: var(--warm-cream);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--soft-shadow);
 }
 
 .bubble-tag.outline {
@@ -242,23 +282,24 @@
 }
 
 .apply-primary-btn {
-    background-color: #EBC374;
-    color: #333;
+    background-color: var(--primary-gold);
+    color: var(--text-dark);
     border: none;
     width: 100%;
     padding: 1.25rem;
-    border-radius: 50px;
+    border-radius: var(--pill-radius);
     font-size: 1.15rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     margin-top: 1rem;
-    box-shadow: 0 4px 15px rgba(235, 195, 116, 0.3);
+    box-shadow: var(--button-shadow);
 }
 
 .apply-primary-btn:hover:not(:disabled) {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(235, 195, 116, 0.4);
+    background: var(--dark-gold);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
 }
 
 .apply-primary-btn:disabled {
@@ -278,8 +319,8 @@
     width: 100%;
     height: 480px;
     object-fit: cover;
-    border-radius: 32px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-radius: var(--panel-radius);
+    box-shadow: var(--card-shadow);
 }
 
 .thumb-strip {
@@ -302,10 +343,10 @@
 .care-card {
     background: white;
     padding: 1.8rem;
-    border-radius: 28px;
+    border-radius: var(--panel-radius);
     margin-top: 2.5rem;
-    border: 1px solid #f0f0f0;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--card-shadow);
 }
 
 .cared-label { 
@@ -340,18 +381,23 @@
 }
 
 .loc-btn {
-    background: #FFF9E5;
-    border: 1px solid #EBC374;
-    padding: 10px 20px;
-    border-radius: 12px;
+    background: #fff;
+    border: 1px solid var(--primary-gold);
+    padding: 14px 20px;
+    border-radius: var(--field-radius);
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9rem;
-    transition: all 0.2s;
-    color: #333;
+    transition: var(--bounce-transition);
+    color: var(--text-dark);
 }
 
-.loc-btn:hover { background: #EBC374; }
+.loc-btn:hover {
+    background: var(--warm-cream);
+    border-color: var(--dark-gold);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--soft-shadow);
+}
 
 .map-placeholder {
     flex-shrink: 0;

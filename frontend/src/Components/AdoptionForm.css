@@ -1,5 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 
+:root {
+    --primary-gold: #e6c273;
+    --dark-gold: #d4b062;
+    --warm-cream: #fcfbf7;
+    --text-dark: #1a1a1a;
+    --text-muted: #666;
+    --border-light: #f0f0f0;
+    --card-radius: 24px;
+    --panel-radius: 28px;
+    --field-radius: 18px;
+    --pill-radius: 50px;
+    --card-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+    --button-shadow: 0 5px 15px rgba(230, 194, 115, 0.3);
+    --soft-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    --transition: all 0.3s ease;
+    --bounce-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -19,34 +37,43 @@
     width: 90%;
     max-width: 550px;
     max-height: 90vh;
-    border-radius: 24px;
+    border-radius: var(--panel-radius);
     padding: 32px;
     position: relative;
     overflow-y: auto;
     font-family: 'Outfit', sans-serif;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .close-modal {
     position: absolute;
     top: 20px;
     right: 20px;
-    background: #f5f5f5;
-    border: none;
+    background: #fff;
+    border: 1px solid var(--border-light);
     border-radius: 50%;
     padding: 8px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: var(--bounce-transition);
     display: flex;
     align-items: center;
     justify-content: center;
+    color: var(--text-muted);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.close-modal:hover {
+    background: var(--warm-cream);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
 }
 
 .modal-header-title {
     font-size: 24px;
     font-weight: 700;
     margin-bottom: 24px;
-    color: #1a1a1a;
+    color: var(--text-dark);
 }
 
 /* Pet Summary Card */
@@ -55,10 +82,11 @@
     align-items: center;
     gap: 16px;
     padding: 16px;
-    background: #fcfcfc;
-    border: 1px solid #f0f0f0;
-    border-radius: 18px;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
     margin-bottom: 20px;
+    box-shadow: var(--soft-shadow);
 }
 
 .summary-img {
@@ -75,7 +103,7 @@
 }
 
 .pet-meta {
-    color: #666;
+    color: var(--text-muted);
     font-size: 14px;
     margin: 4px 0;
 }
@@ -90,12 +118,12 @@
 
 /* Notice Banner */
 .reg-notice-banner {
-    background: #fef7e6;
-    padding: 12px 20px;
-    border-radius: 12px;
+    background: var(--warm-cream);
+    padding: 14px 20px;
+    border-radius: var(--field-radius);
     font-size: 13px;
     margin-bottom: 24px;
-    border: 1px solid #f9eecd;
+    border: 1px solid rgba(230, 194, 115, 0.35);
 }
 
 .text-purple {
@@ -105,19 +133,19 @@
 
 /* Info Cards - Bento Style */
 .info-card {
-    border: 1px solid #f0f0f0;
-    border-radius: 16px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--card-radius);
     margin-bottom: 24px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    box-shadow: var(--soft-shadow);
 }
 
 .info-card-header {
-    background: #fdf3d7;
-    padding: 12px 18px;
+    background: var(--warm-cream);
+    padding: 14px 18px;
     font-weight: 700;
     font-size: 14px;
-    color: #1a1a1a;
+    color: var(--text-dark);
 }
 
 .info-card-content {
@@ -162,20 +190,20 @@
 
 .bento-input-field {
     width: 100%;
-    padding: 12px 16px;
+    padding: 14px 20px;
     border: 1px solid #e8e8e8;
-    border-radius: 12px;
+    border-radius: var(--field-radius);
     background: #fafafa;
     font-family: inherit;
     font-size: 14px;
-    transition: all 0.2s ease;
+    transition: var(--transition);
 }
 
 .bento-input-field:focus {
     outline: none;
-    border-color: #e9c46a;
+    border-color: var(--primary-gold);
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(233, 196, 106, 0.1);
+    box-shadow: 0 0 0 4px rgba(230, 194, 115, 0.1);
 }
 
 /* Form Inputs */
@@ -188,7 +216,7 @@
     font-weight: 700;
     font-size: 15px;
     margin-bottom: 10px;
-    color: #1a1a1a;
+    color: var(--text-dark);
 }
 
 .mandatory-star {
@@ -199,18 +227,21 @@
 .bento-textarea {
     width: 100%;
     min-height: 80px;
-    padding: 14px;
+    padding: 14px 20px;
     border: 1px solid #e0e0e0;
-    border-radius: 12px;
+    border-radius: var(--field-radius);
     font-family: inherit;
     font-size: 14px;
     resize: vertical;
-    transition: border-color 0.2s;
+    background: #fafafa;
+    transition: var(--transition);
 }
 
 .bento-textarea:focus {
     outline: none;
-    border-color: #e9c46a;
+    border-color: var(--primary-gold);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(230, 194, 115, 0.1);
 }
 
 /* Footer Actions */
@@ -222,19 +253,22 @@
 }
 
 .submit-app-btn {
-    background: #e9c46a;
+    background: var(--primary-gold);
     border: none;
     padding: 14px 32px;
-    border-radius: 50px;
+    border-radius: var(--pill-radius);
     font-weight: 700;
     font-family: 'Outfit', sans-serif;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(233, 196, 106, 0.3);
-    transition: transform 0.2s;
+    box-shadow: var(--button-shadow);
+    transition: var(--bounce-transition);
+    color: var(--text-dark);
 }
 
 .submit-app-btn:hover {
-    transform: translateY(-2px);
+    background: var(--dark-gold);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
 }
 
 .submit-app-btn:disabled {
@@ -244,10 +278,20 @@
 }
 
 .save-later-btn {
-    background: none;
-    border: none;
+    background: #fff;
+    border: 1px solid var(--border-light);
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text-dark);
     cursor: pointer;
     font-family: 'Outfit', sans-serif;
+    padding: 14px 24px;
+    border-radius: var(--pill-radius);
+    transition: var(--bounce-transition);
+}
+
+.save-later-btn:hover {
+    background: var(--warm-cream);
+    border-color: var(--primary-gold);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--soft-shadow);
 }

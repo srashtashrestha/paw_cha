@@ -1,15 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.3);
-  --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  --primary-gold: #e6c273;
+  --dark-gold: #d4b062;
+  --warm-cream: #fcfbf7;
+  --border-light: #f0f0f0;
+  --card-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+  --lift-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
   --text-main: #1a1a1a;
-  --text-sub: #666666;
-  
-  /* Status Colors */
-  --pending-bg: #fffbf0; --pending-text: #b26a00;
-  --approved-bg: #f0fdf4; --approved-text: #166534;
+  --text-sub: #666;
+  --pending-bg: #fff3e0;
+  --pending-text: #ef6c00;
+  --approved-bg: #e8f5e9;
+  --approved-text: #2e7d32;
   --rejected-bg: #fef2f2; --rejected-text: #991b1b;
 }
 
@@ -37,7 +40,7 @@
 /* Premium Bento Card */
 .app-card {
     background: #ffffff;
-    border-radius: 32px; /* Smoother, larger radius */
+    border-radius: 24px;
     border: 1px solid rgba(0, 0, 0, 0.04);
     overflow: hidden;
     position: relative;
@@ -48,8 +51,8 @@
 }
 
 .app-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    transform: translateY(-8px);
+    box-shadow: var(--lift-shadow);
     border-color: var(--primary-gold);
 }
 
@@ -88,7 +91,7 @@
     align-items: center;
     gap: 10px;
     padding: 8px 16px;
-    border-radius: 16px; /* Squircle style instead of pill */
+    border-radius: 12px;
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -123,9 +126,9 @@
     grid-column: 1 / -1;
     text-align: center;
     padding: 80px 40px;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.8);
     border: 2px dashed #e0e0e0;
-    border-radius: 32px;
+    border-radius: 24px;
     color: var(--text-sub);
     font-weight: 500;
 }

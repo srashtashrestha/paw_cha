@@ -17,7 +17,7 @@ import MyApplications from './Components/MyApplications';
 import Favourites from './Components/Favourites';
 import Settings from './Components/Settings';
 import ExplorePets from './Components/ExplorePets';
-// import Messages from './Components/Messages';
+import Messages from './Components/Messages';
 
 const router = createBrowserRouter([
   {
@@ -41,7 +41,7 @@ const router = createBrowserRouter([
     element: <DonorRegister /> 
   },
   {
-    path: "/admin",
+    path: "/admin-login",
     element: <AdminLogin />
   },
   {
@@ -95,11 +95,11 @@ const router = createBrowserRouter([
   {
     path: "/explore-pets",
     element: <ExplorePets/>
+  },
+  {
+    path: "/messages",
+    element: <Messages/>
   }
-  // {
-  //   path: "/messages",
-  //   element: <Messages/>
-  // }
 ]);
 
 function App() {
