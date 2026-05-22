@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Search, Bell, Heart, MapPin, Filter, ArrowLeft, X, CheckCircle } from 'lucide-react';
+import { Search, Bell, Heart, MapPin, Filter, ArrowLeft, X, CheckCircle, ShieldCheck } from 'lucide-react';
 import './ExplorePets.css';
 import AdopterSideBar from './AdopterSideBar';
 
@@ -28,51 +28,94 @@ const ExplorePets = () => {
 
     const adopterName = user?.fullName || user?.name || 'User';
 
-    useEffect(() => {
-        const loadPageData = async () => {
-            if (!user?._id && !user?.id) return;
-            const token = user?.token;
-            if (!token) return;
-            setLoading(true);
-            
-            try {
-                const [petsRes, appsRes, favoritesRes] = await Promise.all([
-                    fetch("http://localhost:5000/api/admin/all-pets"),
-                    fetch(`http://localhost:5000/api/adopter/my-inquiries`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    fetch(`http://localhost:5000/api/adopter/favorites`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    })
-                ]);
-
-                const petsData = await petsRes.json();
-                const appsData = await appsRes.json();
-                const favoritesData = await favoritesRes.json();
-
-                if (petsData.success) {
-                    setPets([...petsData.pets].reverse());
+    const fetchPets = useCallback(async () => {
+        try {
+            const petsRes = await fetch("http://localhost:5000/api/pets", {
+                cache: "no-store",
+                headers: {
+                    "Cache-Control": "no-cache"
                 }
+            });
+            const petsData = await petsRes.json();
 
+            if (petsData.success) {
+                setPets(petsData.pets);
+            }
+        } catch (error) {
+            console.error("Error loading pet list:", error);
+        }
+    }, []);
+
+    const fetchUserData = useCallback(async () => {
+        const token = user?.token;
+        if (!token) return;
+
+        try {
+            const [appsResult, favoritesResult] = await Promise.allSettled([
+                fetch(`http://localhost:5000/api/adopter/my-inquiries`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch(`http://localhost:5000/api/adopter/favorites`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+            ]);
+
+            if (appsResult.status === "fulfilled") {
+                const appsData = await appsResult.value.json();
                 if (appsData.success) {
-                    const appliedIds = appsData.inquiries.map(inq => 
+                    const appliedIds = appsData.inquiries.map((inq) =>
                         String(inq.petId?._id || inq.petId)
                     );
                     setUserApplications(appliedIds);
                 }
+            }
 
+            if (favoritesResult.status === "fulfilled") {
+                const favoritesData = await favoritesResult.value.json();
                 if (favoritesData.success) {
                     setFavorites(favoritesData.favorites || []);
                 }
-            } catch (error) {
-                console.error("Error loading explore data:", error);
-            } finally {
-                setLoading(false);
             }
+        } catch (error) {
+            console.error("Error loading adopter-side pet metadata:", error);
+        }
+    }, [user?.token]);
+
+    const loadPageData = useCallback(async () => {
+        setLoading(true);
+        try {
+            await Promise.all([fetchPets(), fetchUserData()]);
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchPets, fetchUserData]);
+
+    useEffect(() => {
+        loadPageData();
+    }, [loadPageData]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchPets();
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, [fetchPets]);
+
+    useEffect(() => {
+        const refreshOnFocus = () => {
+            if (document.visibilityState === "hidden") return;
+            loadPageData();
         };
 
-        loadPageData();
-    }, [user?._id, user?.id, user?.token]);
+        window.addEventListener("focus", refreshOnFocus);
+        document.addEventListener("visibilitychange", refreshOnFocus);
+
+        return () => {
+            window.removeEventListener("focus", refreshOnFocus);
+            document.removeEventListener("visibilitychange", refreshOnFocus);
+        };
+    }, [loadPageData]);
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -156,17 +199,39 @@ const ExplorePets = () => {
         }
     };
 
-    const filteredPets = pets.filter(pet => {
-        const matchesName = pet.name.toLowerCase().includes(filterCriteria.name.toLowerCase());
-        const matchesLocation = pet.location.toLowerCase().includes(filterCriteria.location.toLowerCase());
-        const matchesType = filterCriteria.type === "" || pet.type.toLowerCase() === filterCriteria.type.toLowerCase();
+    const filteredPets = useMemo(() => {
+        const hasActiveFilters =
+            filterCriteria.name.trim() !== "" ||
+            filterCriteria.location.trim() !== "" ||
+            filterCriteria.type !== "" ||
+            filterCriteria.vaccinationStatus !== "" ||
+            filterCriteria.minAge !== 0 ||
+            filterCriteria.maxAge !== 25;
+
+        if (!hasActiveFilters) {
+            return pets;
+        }
+
+        return pets.filter(pet => {
+        const ageValueMatch = String(pet.age ?? "").match(/\d+(\.\d+)?/);
+        const numericAge = ageValueMatch ? Number(ageValueMatch[0]) : null;
+        const ageFilterIsDefault = filterCriteria.minAge === 0 && filterCriteria.maxAge === 25;
+        const petName = String(pet.name || "").toLowerCase();
+        const petLocation = String(pet.location || "").toLowerCase();
+        const petType = String(pet.type || "").toLowerCase();
+        const matchesName = petName.includes(filterCriteria.name.toLowerCase());
+        const matchesLocation = petLocation.includes(filterCriteria.location.toLowerCase());
+        const matchesType = filterCriteria.type === "" || petType === filterCriteria.type.toLowerCase();
         const matchesVaccination =
             filterCriteria.vaccinationStatus === "" ||
             (pet.vaccinationStatus || "").toLowerCase() === filterCriteria.vaccinationStatus.toLowerCase();
-        const matchesAge = pet.age >= filterCriteria.minAge && pet.age <= filterCriteria.maxAge;
+        const matchesAge = numericAge === null
+            ? ageFilterIsDefault
+            : numericAge >= filterCriteria.minAge && numericAge <= filterCriteria.maxAge;
 
-        return matchesName && matchesLocation && matchesType && matchesVaccination && matchesAge;
-    });
+            return matchesName && matchesLocation && matchesType && matchesVaccination && matchesAge;
+        });
+    }, [pets, filterCriteria]);
 
     const handleFilterChange = (e) => {
         const { id, value } = e.target;
@@ -323,7 +388,15 @@ const ExplorePets = () => {
                                             </button>
                                         </div>
                                         <div className="pet-info">
-                                            <h3>{pet.name}</h3>
+                                            <div className="pet-title-row">
+                                                <h3>{pet.name}</h3>
+                                                {pet.isClinicallyApproved && (
+                                                    <span className="clinical-approved-badge">
+                                                        <ShieldCheck size={14} />
+                                                        Clinically Approved
+                                                    </span>
+                                                )}
+                                            </div>
                                             <span className="pet-specs">{pet.age} yrs • {pet.type}</span>
                                             <p className="pet-loc"><MapPin size={14} /> {pet.location}</p>
                                             <button 

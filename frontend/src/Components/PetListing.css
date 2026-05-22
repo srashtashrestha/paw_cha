@@ -135,6 +135,23 @@
     align-items: center;
 }
 
+.pet-card-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.empty-img-slot {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6D5D4B;
+    font-weight: 600;
+    background: linear-gradient(180deg, #F4EBDD 0%, #E6E2D3 100%);
+}
+
 .wishlist-btn {
     position: absolute;
     top: 16px;
@@ -186,6 +203,27 @@
     font-size: 20px;
     font-weight: 700;
     margin: 0 0 4px 0;
+}
+
+.pet-name-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pet-clinical-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid rgba(46, 125, 50, 0.18);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .pet-meta {
@@ -248,4 +286,13 @@
 .load-more-btn-brown:hover {
     background: #5d4037;
     color: white;
+}
+
+.listing-status-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 48px 20px;
+    color: #6D5D4B;
+    font-size: 16px;
+    font-weight: 600;
 }

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
-import { Search, Bell, Heart, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Bell, Heart, MapPin, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
 import './AdopterDashboard.css';
 import AdopterSideBar from './AdopterSideBar';
 
@@ -35,37 +35,55 @@ const AdopterDashboard = () => {
         }
     };
 
-    // Original Data Fetching
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const petResponse = await fetch("http://localhost:5000/api/admin/all-pets");
-                const petResult = await petResponse.json();
-                
-                const [inqResponse, favoritesResponse] = await Promise.all([
-                    fetch(`http://localhost:5000/api/adopter/my-inquiries`, {
-                        headers: { 'Authorization': `Bearer ${user.token}` }
-                    }),
-                    fetch(`http://localhost:5000/api/adopter/favorites`, {
-                        headers: { 'Authorization': `Bearer ${user.token}` }
-                    })
-                ]);
-                const inqResult = await inqResponse.json();
-                const favoritesResult = await favoritesResponse.json();
+    const fetchData = useCallback(async () => {
+        if (!user?.token) return;
 
-                if (petResult.success) setPets(petResult.pets);
-                if (inqResult.success) setMyInquiries(inqResult.inquiries);
-                if (favoritesResult.success) setFavorites(favoritesResult.favorites || []);
-            } catch (error) {
-                console.error("Error fetching dashboard data:", error);
-            } finally {
-                setLoading(false);
-            }
+        setLoading(true);
+        try {
+            const petResponse = await fetch("http://localhost:5000/api/admin/all-pets", {
+                cache: "no-store"
+            });
+            const petResult = await petResponse.json();
+
+            const [inqResponse, favoritesResponse] = await Promise.all([
+                fetch(`http://localhost:5000/api/adopter/my-inquiries`, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                }),
+                fetch(`http://localhost:5000/api/adopter/favorites`, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                })
+            ]);
+            const inqResult = await inqResponse.json();
+            const favoritesResult = await favoritesResponse.json();
+
+            if (petResult.success) setPets(petResult.pets);
+            if (inqResult.success) setMyInquiries(inqResult.inquiries);
+            if (favoritesResult.success) setFavorites(favoritesResult.favorites || []);
+        } catch (error) {
+            console.error("Error fetching dashboard data:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user?.token]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    useEffect(() => {
+        const refreshOnFocus = () => {
+            if (document.visibilityState === "hidden") return;
+            fetchData();
         };
 
-        if (user?.token) fetchData();
-    }, [user]);
+        window.addEventListener("focus", refreshOnFocus);
+        document.addEventListener("visibilitychange", refreshOnFocus);
+
+        return () => {
+            window.removeEventListener("focus", refreshOnFocus);
+            document.removeEventListener("visibilitychange", refreshOnFocus);
+        };
+    }, [fetchData]);
 
     // --- Notification Logic ---
     useEffect(() => {
@@ -155,7 +173,6 @@ const AdopterDashboard = () => {
 
     const filteredPets = useMemo(() => {
         return [...pets]
-            .reverse() 
             .filter(pet => !myInquiries.some(inquiry => inquiry.petId?._id === pet._id))
             .filter(pet => 
                 pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -288,7 +305,15 @@ const AdopterDashboard = () => {
                                         </button>
                                     </div>
                                     <div className="pet-info">
-                                        <h3>{pet.name}</h3>
+                                        <div className="pet-title-row">
+                                            <h3>{pet.name}</h3>
+                                            {pet.isClinicallyApproved && (
+                                                <span className="clinical-approved-badge">
+                                                    <ShieldCheck size={14} />
+                                                    Clinically Approved
+                                                </span>
+                                            )}
+                                        </div>
                                         <span className="pet-specs">{pet.age} yrs • {pet.type}</span>
                                         <p className="pet-loc"><MapPin size={14} /> {pet.location}</p>
                                         <button className="view-profile-btn" onClick={() => navigate(`/pet-profile/${pet._id}`)}>

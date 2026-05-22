@@ -24,6 +24,8 @@ const ForgotPassword = () => {
             const data = await response.json();
 
             if (data.success) {
+                sessionStorage.setItem('resetEmail', email);
+                sessionStorage.removeItem('resetToken');
                 alert(`Verification code sent to ${email}. Please check your inbox or spam folder.`);
                 // Navigate and pass email to the next screen via state
                 navigate('/verify-code', { state: { email } });

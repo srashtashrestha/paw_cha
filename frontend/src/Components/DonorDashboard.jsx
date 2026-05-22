@@ -16,6 +16,7 @@ const DonorDashboard = () => {
     const [formStep, setFormStep] = useState(1);
     const [inquiries, setInquiries] = useState([]); 
     const [selectedFiles, setSelectedFiles] = useState([]);
+    const [verificationFile, setVerificationFile] = useState(null);
     const [myPets, setMyPets] = useState([]);
     const [selectedPetId, setSelectedPetId] = useState(null);
 
@@ -230,11 +231,13 @@ useEffect(() => {
 
     const handleInputChange = (e) => setPetData({ ...petData, [e.target.name]: e.target.value });
     const handleFileChange = (e) => setSelectedFiles(Array.from(e.target.files));
+    const handleVerificationFileChange = (e) => setVerificationFile(e.target.files?.[0] || null);
 
     const closeModal = () => {
         setIsModalOpen(false);
         setFormStep(1);
         setSelectedFiles([]);
+        setVerificationFile(null);
         setSelectedPetId(null);
         setPetData({
             name: '', type: 'Dog', breed: '', age: '', weight: '',
@@ -249,6 +252,9 @@ useEffect(() => {
         const data = new FormData();
         Object.keys(petData).forEach(key => data.append(key, petData[key]));
         selectedFiles.forEach(file => data.append('petImages', file));
+        if (verificationFile) {
+            data.append('clinicalVerificationImage', verificationFile);
+        }
 
         const url = selectedPetId 
             ? `http://localhost:5000/api/pets/update/${selectedPetId}` 
@@ -276,6 +282,7 @@ useEffect(() => {
 
     const handleEditClick = (pet) => {
         setSelectedPetId(pet._id);
+        setVerificationFile(null);
         setPetData({
             name: pet.name, type: pet.type, breed: pet.breed || '',
             age: pet.age, weight: pet.weight || '', location: pet.location,
@@ -549,6 +556,16 @@ useEffect(() => {
                                                 <option value="No">No</option>
                                             </select>
                                             <input type="date" name="vetFollowUp" value={petData.vetFollowUp} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="image-upload-zone">
+                                            <Camera size={32} />
+                                            <p>{verificationFile ? verificationFile.name : "Clinic Pet Verification"}</p>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                name="clinicalVerificationImage"
+                                                onChange={handleVerificationFileChange}
+                                            />
                                         </div>
                                         <div className="btn-row">
                                             <button type="button" onClick={() => setFormStep(1)}>Back</button>

@@ -8,6 +8,7 @@ const AdminDashboard = () => {
     const [donors, setDonors] = useState([]);
     const [adopters, setAdopters] = useState([]);
     const [pets, setPets] = useState([]);
+    const [clinicalApprovalSelections, setClinicalApprovalSelections] = useState({});
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('donors');
     const navigate = useNavigate();
@@ -110,6 +111,47 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleClinicalApprovalToggle = (petId, checked) => {
+        setClinicalApprovalSelections((prev) => ({
+            ...prev,
+            [petId]: checked
+        }));
+    };
+
+    const handleApprovePet = async (petId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const selectedApproval =
+                clinicalApprovalSelections[petId] ?? pets.find((pet) => pet._id === petId)?.isClinicallyApproved ?? false;
+
+            const response = await fetch(`http://127.0.0.1:5000/api/admin/approve-pet/${petId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ isClinicallyApproved: selectedApproval })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setPets((prev) =>
+                    prev.map((pet) =>
+                        pet._id === petId
+                            ? { ...pet, isClinicallyApproved: selectedApproval }
+                            : pet
+                    )
+                );
+                alert("Pet approval updated successfully.");
+            } else {
+                alert(data.message || "Failed to update pet approval.");
+            }
+        } catch (error) {
+            console.error("Error approving pet:", error);
+            alert("Failed to update pet approval.");
+        }
+    };
+
     const handleLogout = () => {
         localStorage.clear();
         navigate('/login');
@@ -151,6 +193,7 @@ const AdminDashboard = () => {
                                         <th>Pet Name</th>
                                         <th>Type & Age</th>
                                         <th>Donor Details</th>
+                                        <th>Clinical Proof</th>
                                         <th>Location</th>
                                         <th>Status</th>
                                         <th>Action</th>
@@ -204,9 +247,9 @@ const AdminDashboard = () => {
                                     <tr key={pet._id}>
                                         <td>
                                             <img 
-                                                src={pet.imagePath ? `http://localhost:5000/uploads/${pet.imagePath}` : "placeholder.png"} 
+                                                src={pet.images?.[0] ? `http://localhost:5000/uploads/${pet.images[0]}` : "placeholder.png"} 
                                                 alt={pet.name} 
-                                                style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
+                                                className="table-pet-img"
                                                 onError={(e) => { e.target.src = 'https://via.placeholder.com/60?text=No+Image'; }}
                                             />
                                         </td>
@@ -222,12 +265,44 @@ const AdminDashboard = () => {
                                             <div style={{ fontWeight: 'bold', color: '#5d4037' }}>{pet.donorId?.fullName || 'Unknown'}</div>
                                             <div style={{ fontSize: '11px', color: '#a1887f' }}>{pet.donorId?.email || 'N/A'}</div>
                                         </td>
+                                        <td>
+                                            {pet.clinicalVerificationImage ? (
+                                                <a
+                                                    href={`http://127.0.0.1:5000/uploads/${pet.clinicalVerificationImage}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="proof-link"
+                                                >
+                                                    <img
+                                                        src={`http://127.0.0.1:5000/uploads/${pet.clinicalVerificationImage}`}
+                                                        alt={`${pet.name} clinical proof`}
+                                                        className="proof-thumbnail"
+                                                    />
+                                                    <span>View Proof</span>
+                                                </a>
+                                            ) : (
+                                                <span className="no-proof-text">No proof uploaded</span>
+                                            )}
+                                        </td>
                                         <td>{pet.location}</td>
                                         <td>
-                                            <span className="status-badge verified">Listed</span>
+                                            <span className={`status-badge ${pet.isClinicallyApproved ? 'verified' : 'pending'}`}>
+                                                {pet.isClinicallyApproved ? 'Clinically Approved' : 'Pending Clinical Review'}
+                                            </span>
                                         </td>
                                         <td>
-                                            <button className="reject-btn" onClick={() => handleDeletePet(pet._id)}>Remove Pet</button>
+                                            <div className="action-buttons pet-review-actions">
+                                                <label className="clinical-approval-check">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={clinicalApprovalSelections[pet._id] ?? pet.isClinicallyApproved ?? false}
+                                                        onChange={(e) => handleClinicalApprovalToggle(pet._id, e.target.checked)}
+                                                    />
+                                                    <span>Mark as Clinically Approved</span>
+                                                </label>
+                                                <button className="verify-btn" onClick={() => handleApprovePet(pet._id)}>Approve Pet</button>
+                                                <button className="reject-btn" onClick={() => handleDeletePet(pet._id)}>Remove Pet</button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

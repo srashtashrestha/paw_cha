@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 let verificationCodes = {}; 
+let verifiedPasswordResets = {};
 
 // ================= 2. STORAGE & STATIC FILES =================
 // Use path.resolve to ensure the 'uploads' folder is reached correctly
@@ -58,6 +60,8 @@ const PetSchema = new mongoose.Schema({
     name: { type: String, required: true },
     type: { type: String, required: true },
     images: [String],
+    clinicalVerificationImage: { type: String },
+    isClinicallyApproved: { type: Boolean, default: false },
     breed: { type: String },
     age: { type: String, required: true },
     weight: { type: String },
@@ -92,6 +96,10 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
 });
 const upload = multer({ storage });
+const petUpload = upload.fields([
+    { name: "petImages", maxCount: 4 },
+    { name: "clinicalVerificationImage", maxCount: 1 }
+]);
 
 // Auth Middleware
 const authenticate = (req, res, next) => {
@@ -278,10 +286,17 @@ app.post("/api/inquiries/apply", authenticate, async (req, res) => {
     }
 });
 
-app.post("/api/pets/list", authenticate, upload.array("petImages", 4), async (req, res) => {
+app.post("/api/pets/list", authenticate, petUpload, async (req, res) => {
     try {
-        const imageUrls = req.files ? req.files.map(file => file.filename) : [];
-        const newPet = new Pet({ ...req.body, donorId: req.user.id, images: imageUrls });
+        const petImages = req.files?.petImages || [];
+        const imageUrls = petImages.map((file) => file.filename);
+        const clinicalVerificationImage = req.files?.clinicalVerificationImage?.[0]?.filename;
+        const newPet = new Pet({
+            ...req.body,
+            donorId: req.user.id,
+            images: imageUrls,
+            ...(clinicalVerificationImage ? { clinicalVerificationImage } : {})
+        });
         await newPet.save();
         res.status(201).json({ success: true, pet: newPet });
     } catch (error) {
@@ -291,6 +306,17 @@ app.post("/api/pets/list", authenticate, upload.array("petImages", 4), async (re
 
 app.get("/api/admin/all-pets", async (req, res) => {
     try {
+        res.set("Cache-Control", "no-store");
+        const pets = await Pet.find().populate('donorId', 'fullName email').sort({ createdAt: -1 });
+        res.json({ success: true, pets });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.get("/api/pets", async (req, res) => {
+    try {
+        res.set("Cache-Control", "no-store");
         const pets = await Pet.find().populate('donorId', 'fullName email').sort({ createdAt: -1 });
         res.json({ success: true, pets });
     } catch (error) {
@@ -309,14 +335,20 @@ app.get("/api/pets/:id", async (req, res) => {
 });
 
 // Update an existing pet listing
-app.put("/api/pets/update/:id", authenticate, upload.array("petImages", 4), async (req, res) => {
+app.put("/api/pets/update/:id", authenticate, petUpload, async (req, res) => {
     try {
         const petId = req.params.id;
         const updates = { ...req.body };
+        const petImages = req.files?.petImages || [];
+        const clinicalVerificationImage = req.files?.clinicalVerificationImage?.[0]?.filename;
 
         // If new images are uploaded, update the images array
-        if (req.files && req.files.length > 0) {
-            updates.images = req.files.map(file => file.filename);
+        if (petImages.length > 0) {
+            updates.images = petImages.map((file) => file.filename);
+        }
+
+        if (clinicalVerificationImage) {
+            updates.clinicalVerificationImage = clinicalVerificationImage;
         }
 
         const updatedPet = await Pet.findOneAndUpdate(
@@ -467,14 +499,13 @@ app.put("/api/inquiries/status/:id", authenticate, async (req, res) => {
 
         if (status === 'approved') {
             const autoMsgText = `Hi ${inquiry.adopterName}! I have approved your application for ${inquiry.petId.name}. Let's chat!`;
-
             const autoMessage = new Message({
                 chatId: inquiryId,
                 senderId: req.user.id, 
                 text: autoMsgText
             });
             await autoMessage.save();
-
+            
             const populatedAutoMessage = await Message.findById(autoMessage._id)
                 .populate('senderId', 'fullName profilePic');
 
@@ -628,34 +659,102 @@ app.post('/api/forgot-password', async (req, res) => {
         if (!user) return res.status(404).json({ success: false, message: "Email not found" });
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         verificationCodes[email] = code; 
-        setTimeout(() => { delete verificationCodes[email]; }, 600000);
+        delete verifiedPasswordResets[email];
+        setTimeout(() => {
+            delete verificationCodes[email];
+            delete verifiedPasswordResets[email];
+        }, 600000);
+        const mailUser = process.env.GMAIL_USER;
+        const mailPass = process.env.GMAIL_PASS;
+
+        if (!mailUser || !mailPass) {
+            const missingConfigError = new Error("Missing GMAIL_USER or GMAIL_PASS environment variable");
+            console.error("Forgot password email send failed:", missingConfigError);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send reset email. Please try again later."
+            });
+        }
+
         let transporter = nodemailer.createTransport({
             service: 'gmail',
-            auth: { user: 'srashtashr06@gmail.com', pass: 'khsm tcbb ykov enzk' }
+            auth: {
+                user: mailUser,
+                pass: mailPass
+            }
         });
-        await transporter.sendMail({
-            from: '"PawCha Support" <srashtashr06@gmail.com>',
-            to: email,
-            subject: "Your Password Reset Code",
-            text: `Your verification code is: ${code}.`
-        });
-        res.json({ success: true, message: "Code sent!" });
+        try {
+            await transporter.sendMail({
+                from: `"PawCha Support" <${mailUser}>`,
+                to: email,
+                subject: "Your Password Reset Code",
+                text: `Your verification code is: ${code}.`
+            });
+            res.json({ success: true, message: "Code sent!" });
+        } catch (mailError) {
+            console.error("Forgot password email send failed:", mailError);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send reset email. Please try again later."
+            });
+        }
     } catch (error) {
-        res.status(500).json({ success: false });
+        console.error("Forgot password route failed:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error while preparing password reset."
+        });
     }
 });
 
 app.post('/api/verify-code', (req, res) => {
     const { email, code } = req.body;
-    if (verificationCodes[email] === code) res.json({ success: true });
-    else res.status(400).json({ success: false, message: "Invalid code" });
+    if (!email || !code) {
+        return res.status(400).json({ success: false, message: "Email and code are required" });
+    }
+
+    if (verificationCodes[email] === code) {
+        verifiedPasswordResets[email] = true;
+        const resetToken = jwt.sign(
+            { email, purpose: "password_reset" },
+            SECRET_KEY,
+            { expiresIn: "10m" }
+        );
+        return res.json({ success: true, resetToken });
+    }
+
+    res.status(400).json({ success: false, message: "Invalid code" });
 });
 
 app.post('/api/reset-password', async (req, res) => {
-    const { email, newPassword } = req.body;
+    const { email, newPassword, resetToken } = req.body;
     try {
-        await User.findOneAndUpdate({ email }, { password: newPassword });
+        if (!email || !newPassword) {
+            return res.status(400).json({ success: false, message: "Email and new password are required" });
+        }
+
+        let hasVerifiedReset = Boolean(verifiedPasswordResets[email]);
+
+        if (resetToken) {
+            try {
+                const decoded = jwt.verify(resetToken, SECRET_KEY);
+                hasVerifiedReset = decoded?.purpose === "password_reset" && decoded?.email === email;
+            } catch (error) {
+                hasVerifiedReset = false;
+            }
+        }
+
+        if (!hasVerifiedReset) {
+            return res.status(403).json({ success: false, message: "Please verify your reset code first" });
+        }
+
+        const updatedUser = await User.findOneAndUpdate({ email }, { password: newPassword });
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
         delete verificationCodes[email]; 
+        delete verifiedPasswordResets[email];
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false });
@@ -717,6 +816,25 @@ app.get("/api/admin/donors", async (req, res) => {
 app.get("/api/admin/adopters", async (req, res) => {
     const adopters = await User.find({ role: "adopter" }).sort({ createdAt: -1 });
     res.json({ success: true, adopters });
+});
+
+app.put("/api/admin/approve-pet/:id", async (req, res) => {
+    try {
+        const { isClinicallyApproved = false } = req.body;
+        const pet = await Pet.findByIdAndUpdate(
+            req.params.id,
+            { isClinicallyApproved: Boolean(isClinicallyApproved) },
+            { new: true }
+        );
+
+        if (!pet) {
+            return res.status(404).json({ success: false, message: "Pet not found" });
+        }
+
+        res.json({ success: true, pet });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Failed to update pet approval" });
+    }
 });
 
 app.put("/api/admin/verify-donor/:id", async (req, res) => {

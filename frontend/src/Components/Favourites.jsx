@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Heart, Bell} from 'lucide-react';
+import { MapPin, Heart, Bell, ShieldCheck } from 'lucide-react';
 import AdopterSideBar from './AdopterSideBar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -73,7 +73,15 @@ const adopterName = user?.name || 'User';
                                     </div>
                                 </div>
                                 <div className="pet-info">
-                                    <h3>{pet.name}</h3>
+                                    <div className="pet-title-row">
+                                        <h3>{pet.name}</h3>
+                                        {pet.isClinicallyApproved && (
+                                            <span className="clinical-approved-badge">
+                                                <ShieldCheck size={14} />
+                                                Clinically Approved
+                                            </span>
+                                        )}
+                                    </div>
                                     <span className="pet-specs">{pet.age} yrs • {pet.type}</span>
                                     <p className="pet-loc"><MapPin size={14} /> {pet.location}</p>
                                 </div>

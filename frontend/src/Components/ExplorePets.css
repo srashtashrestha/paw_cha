@@ -289,6 +289,37 @@
     box-shadow: var(--lift-shadow);
 }
 
+.pet-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.pet-title-row h3 {
+    margin: 0;
+}
+
+.clinical-approved-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--status-approved-bg);
+    border: 1px solid rgba(46, 125, 50, 0.18);
+    color: var(--status-approved-text);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 6px 18px rgba(46, 125, 50, 0.08);
+}
+
+.clinical-approved-badge svg {
+    color: var(--status-approved-text);
+}
+
 .notification-wrapper {
     position: relative;
 }

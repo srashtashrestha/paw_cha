@@ -170,6 +170,11 @@
     gap: 12px;
 }
 
+.pet-review-actions {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .verify-btn {
     background: #10b981;
     color: white;
@@ -202,4 +207,40 @@
     text-decoration: none;
     font-weight: 700;
     border-bottom: 2px solid #ddd3d0;
+}
+
+.proof-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary-brown);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.proof-thumbnail {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow);
+}
+
+.no-proof-text {
+    color: #8d6e63;
+    font-size: 13px;
+}
+
+.clinical-approval-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.clinical-approval-check input {
+    accent-color: var(--primary-brown);
 }
