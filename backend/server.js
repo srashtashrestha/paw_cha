@@ -57,6 +57,8 @@ const User = mongoose.model("User", UserSchema);
 
 const PetSchema = new mongoose.Schema({
     donorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    adoptedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    reservedFor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     name: { type: String, required: true },
     type: { type: String, required: true },
     images: [String],
@@ -72,6 +74,11 @@ const PetSchema = new mongoose.Schema({
     personality: { type: String },
     lovesLikes: { type: String },
     reasonForAdoption: { type: String, required: true },
+    status: { type: String, default: "available" },
+    vaccinationHistory: [{
+        date: { type: Date, required: true },
+        vaccineName: { type: String, required: true }
+    }],
     createdAt: { type: Date, default: Date.now }
 });
 const Pet = mongoose.model("Pet", PetSchema);
@@ -120,8 +127,25 @@ const io = new Server(server, {
 });
 
 const resolveChatId = (payload = {}) => payload.chatId || payload.inquiryId;
+const getUserRoom = (userId) => `user:${String(userId)}`;
+const emitNotificationToRecipient = (notificationDoc) => {
+    if (!notificationDoc?.recipient) return;
+    io.to(getUserRoom(notificationDoc.recipient)).emit("notification_created", notificationDoc);
+};
 
 io.on('connection', (socket) => {
+    try {
+        const token = socket.handshake.auth?.token;
+        if (token) {
+            const decoded = jwt.verify(token, SECRET_KEY);
+            if (decoded?.id) {
+                socket.join(getUserRoom(decoded.id));
+            }
+        }
+    } catch (error) {
+        console.error("Socket auth failed:", error.message);
+    }
+
     socket.on('join_chat', (chatId) => {
         const room = String(chatId);
         socket.join(room);
@@ -245,6 +269,31 @@ app.post("/api/inquiries/apply", authenticate, async (req, res) => {
         // This prevents users from spoofing other IDs or sending undefined values
         const userId = req.user.id; 
 
+        const pet = await Pet.findById(petId).select("status reservedFor name");
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                message: "Pet not found"
+            });
+        }
+
+        if (pet.status === "adopted") {
+            return res.status(400).json({
+                success: false,
+                message: "This pet has already been adopted."
+            });
+        }
+
+        if (
+            pet.status === "reserved" &&
+            String(pet.reservedFor || "") !== String(userId)
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "This pet is currently reserved for another adopter."
+            });
+        }
+
         // 1. Search for an existing application using the authenticated User ID
         const existingInquiry = await Inquiry.findOne({ 
             petId: petId, 
@@ -272,6 +321,14 @@ app.post("/api/inquiries/apply", authenticate, async (req, res) => {
         });
 
         await newInquiry.save();
+
+        const donorNotification = await Notification.create({
+            recipient: newInquiry.donorId,
+            type: "message",
+            message: `${adopterName} sent an adoption inquiry for ${pet.name}.`,
+            petId
+        });
+        emitNotificationToRecipient(donorNotification.toObject());
         
         res.status(201).json({ 
             success: true, 
@@ -317,10 +374,28 @@ app.get("/api/admin/all-pets", async (req, res) => {
 app.get("/api/pets", async (req, res) => {
     try {
         res.set("Cache-Control", "no-store");
-        const pets = await Pet.find().populate('donorId', 'fullName email').sort({ createdAt: -1 });
+        const pets = await Pet.find({
+            status: { $ne: "adopted" }
+        }).populate('donorId', 'fullName email').sort({ createdAt: -1 });
         res.json({ success: true, pets });
     } catch (error) {
         res.status(500).json({ success: false });
+    }
+});
+
+app.get("/api/pets/my-adoptions", authenticate, async (req, res) => {
+    try {
+        const pets = await Pet.find({
+            adoptedBy: req.user.id,
+            status: "adopted"
+        })
+            .populate("donorId", "fullName email profilePic")
+            .sort({ createdAt: -1 });
+
+        res.json({ success: true, pets });
+    } catch (error) {
+        console.error("Fetch adopted pets error:", error);
+        res.status(500).json({ success: false, message: "Failed to load adopted pets" });
     }
 });
 
@@ -331,6 +406,43 @@ app.get("/api/pets/:id", async (req, res) => {
         res.json({ success: true, pet });
     } catch (error) {
         res.status(500).json({ success: false });
+    }
+});
+
+app.post("/api/pets/:id/vaccinate", authenticate, async (req, res) => {
+    try {
+        const { date, vaccineName } = req.body;
+
+        if (!date || !vaccineName?.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Vaccine name and date are required"
+            });
+        }
+
+        const pet = await Pet.findOne({
+            _id: req.params.id,
+            adoptedBy: req.user.id
+        }).populate("donorId", "fullName email profilePic");
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                message: "Adopted pet not found"
+            });
+        }
+
+        pet.vaccinationHistory.push({
+            date: new Date(date),
+            vaccineName: vaccineName.trim()
+        });
+
+        await pet.save();
+
+        res.json({ success: true, pet });
+    } catch (error) {
+        console.error("Vaccination log error:", error);
+        res.status(500).json({ success: false, message: "Failed to log vaccination" });
     }
 });
 
@@ -473,7 +585,7 @@ app.get("/api/donor/my-pets", authenticate, async (req, res) => {
 app.get("/api/donor/inquiries", authenticate, async (req, res) => {
     try {
         const inquiries = await Inquiry.find({ donorId: req.user.id })
-            .populate('petId', 'name images')
+            .populate('petId', 'name images status reservedFor adoptedBy')
             .populate('adopterId', 'fullName email profilePic')
             .sort({ createdAt: -1 });
         res.json({ success: true, inquiries });
@@ -486,18 +598,151 @@ app.put("/api/inquiries/status/:id", authenticate, async (req, res) => {
     try {
         const { status } = req.body;
         const inquiryId = req.params.id;
-
-        const inquiry = await Inquiry.findOneAndUpdate(
-            { _id: req.params.id, donorId: req.user.id },
-            { status: status },
-            { new: true }
-        ).populate('petId', 'name');
+        const inquiry = await Inquiry.findOne({
+            _id: req.params.id,
+            donorId: req.user.id
+        }).populate('petId', 'name status reservedFor adoptedBy');
 
         if (!inquiry) {
             return res.status(404).json({ success: false, message: "Inquiry not found" });
         }
 
-        if (status === 'approved') {
+        const pet = await Pet.findById(inquiry.petId._id);
+        if (!pet) {
+            return res.status(404).json({ success: false, message: "Pet not found" });
+        }
+
+        const currentStatus = inquiry.status;
+
+        if (status === "approved") {
+            if (pet.status === "adopted") {
+                return res.status(400).json({
+                    success: false,
+                    message: "This pet has already been adopted."
+                });
+            }
+
+            if (
+                pet.status === "reserved" &&
+                String(pet.reservedFor || "") !== String(inquiry.adopterId)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "This pet is currently reserved for another adopter."
+                });
+            }
+
+            inquiry.status = "approved";
+            await inquiry.save();
+
+            pet.status = "reserved";
+            pet.reservedFor = inquiry.adopterId;
+            pet.adoptedBy = null;
+            await pet.save();
+        } else if (status === "finalized") {
+            if (currentStatus !== "approved") {
+                return res.status(400).json({
+                    success: false,
+                    message: "Only reserved inquiries can be finalized."
+                });
+            }
+
+            const reservedForCurrentAdopter =
+                String(pet.reservedFor || "") === String(inquiry.adopterId);
+
+            if (pet.status === "adopted") {
+                return res.status(400).json({
+                    success: false,
+                    message: "This pet has already been adopted."
+                });
+            }
+
+            // Recover legacy approved inquiries that were saved before the
+            // reserved-phase fields were fully synchronized on the pet record.
+            if (
+                currentStatus === "approved" &&
+                pet.status === "available" &&
+                !pet.reservedFor
+            ) {
+                pet.status = "reserved";
+                pet.reservedFor = inquiry.adopterId;
+                await pet.save();
+            }
+
+            if (
+                pet.status !== "reserved" ||
+                String(pet.reservedFor || "") !== String(inquiry.adopterId)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "This pet is not reserved for this adopter anymore."
+                });
+            }
+
+            inquiry.status = "adopted";
+            await inquiry.save();
+
+            pet.status = "adopted";
+            pet.adoptedBy = inquiry.adopterId;
+            pet.reservedFor = null;
+            await pet.save();
+
+            await Inquiry.updateMany(
+                {
+                    petId: inquiry.petId._id,
+                    _id: { $ne: inquiry._id },
+                    status: { $in: ["pending", "approved"] }
+                },
+                { $set: { status: "closed" } }
+            );
+        } else if (status === "declined") {
+            if (currentStatus !== "approved") {
+                return res.status(400).json({
+                    success: false,
+                    message: "Only reserved inquiries can be declined from verification."
+                });
+            }
+
+            if (
+                pet.status !== "reserved" ||
+                String(pet.reservedFor || "") !== String(inquiry.adopterId)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "This pet is not reserved for this adopter anymore."
+                });
+            }
+
+            inquiry.status = "rejected";
+            await inquiry.save();
+
+            if (
+                pet.status === "reserved" &&
+                String(pet.reservedFor || "") === String(inquiry.adopterId)
+            ) {
+                pet.status = "available";
+                pet.reservedFor = null;
+                pet.adoptedBy = null;
+                await pet.save();
+            }
+        } else {
+            inquiry.status = status;
+            await inquiry.save();
+
+            if (status === "rejected") {
+                if (
+                    pet.status === "reserved" &&
+                    String(pet.reservedFor || "") === String(inquiry.adopterId)
+                ) {
+                    pet.status = "available";
+                    pet.reservedFor = null;
+                    pet.adoptedBy = null;
+                    await pet.save();
+                }
+            }
+        }
+
+        if (status === 'approved' && currentStatus !== 'approved') {
             const autoMsgText = `Hi ${inquiry.adopterName}! I have approved your application for ${inquiry.petId.name}. Let's chat!`;
             const autoMessage = new Message({
                 chatId: inquiryId,
@@ -512,27 +757,29 @@ app.put("/api/inquiries/status/:id", authenticate, async (req, res) => {
             io.to(inquiryId.toString()).emit('receive_message', populatedAutoMessage);
         }
 
-        if (status === 'approved' || status === 'rejected') {
+        if (status === 'approved' || status === 'rejected' || status === 'declined') {
+            const notificationStatus = status === "declined" ? "rejected" : status;
             const newNotif = new Notification({
                 recipient: inquiry.adopterId,
-                type: status === 'approved' ? 'approval' : 'rejection',
-                message: status === 'approved' 
+                type: notificationStatus === 'approved' ? 'approval' : 'rejection',
+                message: notificationStatus === 'approved' 
                     ? `Congratulations! Your application for ${inquiry.petId.name} was approved.`
                     : `Update: Your application for ${inquiry.petId.name} was not accepted.`,
                 petId: inquiry.petId._id
             });
             await newNotif.save();
+            emitNotificationToRecipient(newNotif.toObject());
 
             let transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: { 
-                    user: 'srashtashr06@gmail.com', 
-                    pass: 'khsm tcbb ykov enzk' 
+                    user: process.env.GMAIL_USER, 
+                    pass: process.env.GMAIL_PASS 
                 }
             });
 
             // Dynamic content based on status
-            const isApproved = status === 'approved';
+            const isApproved = notificationStatus === 'approved';
             const emailHtml = `
                 <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
                     <h2 style="color: ${isApproved ? '#7c4dff' : '#d32f2f'};">
@@ -554,17 +801,25 @@ app.put("/api/inquiries/status/:id", authenticate, async (req, res) => {
                 </div>
             `;
 
-            await transporter.sendMail({
-                from: '"PawCha Support" <srashtashr06@gmail.com>',
-                to: inquiry.adopterEmail,
-                subject: isApproved 
-                    ? `Your application for ${inquiry.petId.name} was approved!` 
-                    : `Update regarding your application for ${inquiry.petId.name}`,
-                html: emailHtml
-            });
+            try {
+                await transporter.sendMail({
+                    from: `"PawCha Support" <${process.env.GMAIL_USER}>`,
+                    to: inquiry.adopterEmail,
+                    subject: isApproved 
+                        ? `Your application for ${inquiry.petId.name} was approved!` 
+                        : `Update regarding your application for ${inquiry.petId.name}`,
+                    html: emailHtml
+                });
+            } catch (mailError) {
+                console.error("Inquiry status email send failed:", mailError);
+            }
         }
 
-        res.json({ success: true, inquiry });
+        const refreshedInquiry = await Inquiry.findById(inquiry._id)
+            .populate('petId', 'name images status reservedFor adoptedBy')
+            .populate('adopterId', 'fullName email profilePic');
+
+        res.json({ success: true, inquiry: refreshedInquiry });
     } catch (error) {
         console.error("Status Update Error:", error);
         res.status(500).json({ success: false, message: "Internal server error" });
@@ -605,6 +860,20 @@ app.post("/api/messages/send", authenticate, async (req, res) => {
             .populate('senderId', 'fullName profilePic');
 
         io.to(chatId.toString()).emit('receive_message', populatedMsg);
+
+        const relatedInquiry = await Inquiry.findById(chatId).populate('petId', 'name');
+        if (
+            relatedInquiry &&
+            String(req.user.id) === String(relatedInquiry.adopterId)
+        ) {
+            const donorNotification = await Notification.create({
+                recipient: relatedInquiry.donorId,
+                type: "message",
+                message: `${populatedMsg.senderId?.fullName || "An adopter"} sent a new message about ${relatedInquiry.petId?.name || "your pet"}.`,
+                petId: relatedInquiry.petId?._id || relatedInquiry.petId
+            });
+            emitNotificationToRecipient(donorNotification.toObject());
+        }
 
         res.json({ success: true, newMessage: populatedMsg });
     } catch (error) {
@@ -834,6 +1103,30 @@ app.put("/api/admin/approve-pet/:id", async (req, res) => {
         res.json({ success: true, pet });
     } catch (error) {
         res.status(500).json({ success: false, message: "Failed to update pet approval" });
+    }
+});
+
+app.delete("/api/admin/delete-pet/:id", async (req, res) => {
+    try {
+        const petId = req.params.id;
+        const pet = await Pet.findByIdAndDelete(petId);
+
+        if (!pet) {
+            return res.status(404).json({ success: false, message: "Pet not found" });
+        }
+
+        const relatedInquiries = await Inquiry.find({ petId }).select("_id");
+        const inquiryIds = relatedInquiries.map((inquiry) => inquiry._id);
+
+        if (inquiryIds.length > 0) {
+            await Message.deleteMany({ chatId: { $in: inquiryIds } });
+            await Inquiry.deleteMany({ _id: { $in: inquiryIds } });
+        }
+
+        res.json({ success: true, message: "Pet listing removed successfully" });
+    } catch (error) {
+        console.error("Admin pet delete error:", error);
+        res.status(500).json({ success: false, message: "Failed to remove pet listing" });
     }
 });
 

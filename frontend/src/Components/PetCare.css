@@ -1,0 +1,559 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-gold: #e6c273;
+    --dark-gold: #d4b062;
+    --warm-cream: #fcfbf7;
+    --text-dark: #1a1a1a;
+    --text-muted: #666;
+    --border-light: #f0f0f0;
+    --card-radius: 24px;
+    --panel-radius: 28px;
+    --field-radius: 18px;
+    --pill-radius: 50px;
+    --card-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+    --lift-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    --button-shadow: 0 5px 15px rgba(230, 194, 115, 0.3);
+    --soft-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    --transition: all 0.3s ease;
+    --bounce-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --status-approved-bg: #e8f5e9;
+    --status-approved-text: #2e7d32;
+    --status-due-bg: #fff3e0;
+    --status-due-text: #ef6c00;
+    --status-overdue-bg: #ffebee;
+    --status-overdue-text: #c62828;
+}
+
+.petcare-main {
+    font-family: 'Outfit', sans-serif;
+}
+
+.petcare-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2.25rem;
+}
+
+.petcare-eyebrow {
+    margin: 0 0 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.petcare-header h1 {
+    margin: 0;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.petcare-subtitle {
+    margin: 0.75rem 0 0;
+    max-width: 620px;
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.petcare-profile-pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 18px 8px 8px;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: var(--pill-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    flex-shrink: 0;
+}
+
+.petcare-profile-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #4a332d;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.petcare-profile-pill strong {
+    display: block;
+    font-size: 0.98rem;
+    color: var(--text-dark);
+}
+
+.petcare-profile-label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.petcare-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, 430px);
+    gap: 24px;
+    align-items: start;
+}
+
+.petcare-bento-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 22px;
+}
+
+.petcare-card {
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    background: #fff;
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition);
+}
+
+.petcare-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--lift-shadow);
+}
+
+.petcare-card.selected {
+    border-color: rgba(230, 194, 115, 0.9);
+    box-shadow: 0 0 0 2px rgba(230, 194, 115, 0.18), var(--lift-shadow);
+}
+
+.petcare-status-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.petcare-status-banner.up-to-date,
+.petcare-panel-pill.up-to-date {
+    background: var(--status-approved-bg);
+    color: var(--status-approved-text);
+}
+
+.petcare-status-banner.due-soon,
+.petcare-panel-pill.due-soon {
+    background: var(--status-due-bg);
+    color: var(--status-due-text);
+}
+
+.petcare-status-banner.overdue,
+.petcare-panel-pill.overdue {
+    background: var(--status-overdue-bg);
+    color: var(--status-overdue-text);
+}
+
+.petcare-card-body {
+    padding: 16px;
+}
+
+.petcare-card-media {
+    width: 100%;
+    height: 210px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--warm-cream);
+    margin-bottom: 16px;
+}
+
+.petcare-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.petcare-card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-gold);
+    background: linear-gradient(135deg, #fffefb 0%, var(--warm-cream) 100%);
+}
+
+.petcare-card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.petcare-card-title-row h3 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.petcare-clinical-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--status-approved-bg);
+    border: 1px solid rgba(46, 125, 50, 0.18);
+    color: var(--status-approved-text);
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 6px 18px rgba(46, 125, 50, 0.08);
+}
+
+.petcare-card-meta,
+.petcare-card-location,
+.petcare-card-footer {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+}
+
+.petcare-card-meta {
+    margin-bottom: 10px;
+}
+
+.petcare-card-location {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 16px;
+}
+
+.petcare-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid #f5f5f5;
+}
+
+.petcare-card-footer strong {
+    color: var(--text-dark);
+    font-size: 0.92rem;
+}
+
+.petcare-detail-panel {
+    position: sticky;
+    top: 30px;
+    background: #fff;
+    border-radius: var(--panel-radius);
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.petcare-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.petcare-panel-label {
+    margin: 0 0 0.45rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.petcare-panel-head h2 {
+    margin: 0;
+    font-size: 1.9rem;
+    color: var(--text-dark);
+}
+
+.petcare-panel-pill {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.petcare-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.petcare-detail-card,
+.petcare-contact-card,
+.petcare-history-card,
+.petcare-log-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: var(--soft-shadow);
+}
+
+.petcare-detail-card strong {
+    display: block;
+    color: var(--text-dark);
+    margin: 4px 0 6px;
+    font-size: 1rem;
+}
+
+.petcare-detail-card p,
+.petcare-contact-row p,
+.petcare-history-item p,
+.petcare-history-empty,
+.petcare-feedback {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.petcare-detail-kicker {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.petcare-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.petcare-section-title h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--text-dark);
+}
+
+.petcare-contact-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.petcare-contact-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: #4a332d;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.petcare-contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.petcare-contact-info span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.petcare-history-card {
+    margin-top: 18px;
+}
+
+.petcare-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.petcare-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: var(--warm-cream);
+}
+
+.petcare-history-item strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-dark);
+}
+
+.petcare-history-chip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    color: var(--text-dark);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.petcare-log-card {
+    margin-top: 18px;
+}
+
+.petcare-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.petcare-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.petcare-form-row label {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.petcare-form-row input {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: var(--field-radius);
+    border: 1.5px solid #eee;
+    font-size: 0.95rem;
+    outline: none;
+    background: #fafafa;
+    transition: var(--transition);
+    font-family: inherit;
+    color: var(--text-dark);
+}
+
+.petcare-form-row input:focus {
+    border-color: var(--primary-gold);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(230, 194, 115, 0.1);
+}
+
+.petcare-primary-btn {
+    background: var(--primary-gold);
+    color: var(--text-dark);
+    border: none;
+    padding: 16px;
+    border-radius: var(--pill-radius);
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: var(--bounce-transition);
+}
+
+.petcare-primary-btn:hover:not(:disabled) {
+    background: var(--dark-gold);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--button-shadow);
+}
+
+.petcare-primary-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.petcare-feedback {
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.petcare-empty-state {
+    background: #fff;
+    border-radius: var(--panel-radius);
+    padding: 56px 32px;
+    text-align: center;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    box-shadow: var(--card-shadow);
+    color: var(--text-muted);
+}
+
+.petcare-empty-state svg {
+    color: var(--primary-gold);
+    margin-bottom: 16px;
+}
+
+.petcare-empty-state h2 {
+    margin: 0 0 10px;
+    color: var(--text-dark);
+    font-size: 1.55rem;
+}
+
+.petcare-empty-state p {
+    margin: 0;
+    max-width: 440px;
+    margin-inline: auto;
+    line-height: 1.6;
+}
+
+@media (max-width: 1180px) {
+    .petcare-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .petcare-detail-panel {
+        position: static;
+    }
+}
+
+@media (max-width: 900px) {
+    .petcare-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .petcare-profile-pill {
+        align-self: flex-start;
+    }
+
+    .petcare-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .petcare-bento-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .petcare-panel-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .petcare-card-footer,
+    .petcare-history-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

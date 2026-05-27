@@ -40,7 +40,7 @@ const AdopterDashboard = () => {
 
         setLoading(true);
         try {
-            const petResponse = await fetch("http://localhost:5000/api/admin/all-pets", {
+            const petResponse = await fetch("http://localhost:5000/api/pets", {
                 cache: "no-store"
             });
             const petResult = await petResponse.json();
@@ -111,27 +111,37 @@ const AdopterDashboard = () => {
         return () => clearInterval(interval);
     }, [user?.token]);
 
-    const toggleNotifDropdown = async () => {
-        const nextState = !showNotifDropdown;
-        setShowNotifDropdown(nextState);
+    const toggleNotifDropdown = () => {
+        setShowNotifDropdown((prev) => !prev);
+    };
 
-        if (nextState && unreadCount > 0) {
-            if (!user?.token) return;
+    const handleMarkAsRead = async (notificationId) => {
+        if (!user?.token) return;
 
-            try {
-                setUnreadCount(0);
-                setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        const targetNotification = notifications.find((notification) => notification._id === notificationId);
+        if (!targetNotification || targetNotification.read) return;
 
-                await fetch(`http://localhost:5000/api/notifications/mark-all-read`, {
-                    method: 'PUT',
-                    headers: { 
-                        'Authorization': `Bearer ${user.token}`,
-                        'Content-Type': 'application/json' 
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to sync notification status", err);
+        try {
+            const response = await fetch(`http://localhost:5000/api/notifications/read/${notificationId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${user.token}`
+                }
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setNotifications((prev) =>
+                    prev.map((notification) =>
+                        notification._id === notificationId
+                            ? { ...notification, read: true }
+                            : notification
+                    )
+                );
+                setUnreadCount((prev) => Math.max(0, prev - 1));
             }
+        } catch (error) {
+            console.error("Failed to mark notification as read", error);
         }
     };
 
@@ -229,11 +239,18 @@ const AdopterDashboard = () => {
                                             <div key={n._id} className={`notif-item ${n.read ? 'read' : 'unread'}`}>
                                                 <p>{n.message}</p>
                                                 <div className="notif-actions">
-                                                     {n.type === 'approval' && (
-                                                         <button className="chat-now-btn" onClick={() => navigate('/messages')}>
-                                                             Chat Now
-                                                         </button>
-                                                     )}
+                                                    <div className="notif-action-buttons">
+                                                        {n.type === 'approval' && (
+                                                            <button className="chat-now-btn" onClick={() => navigate('/messages')}>
+                                                                Chat Now
+                                                            </button>
+                                                        )}
+                                                        {!n.read && (
+                                                            <button className="mark-read-btn" onClick={() => handleMarkAsRead(n._id)}>
+                                                                Mark as read
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                      <span className="notif-time">{new Date(n.createdAt).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
@@ -307,6 +324,12 @@ const AdopterDashboard = () => {
                                     <div className="pet-info">
                                         <div className="pet-title-row">
                                             <h3>{pet.name}</h3>
+                                            {pet.status === 'reserved' && (
+                                                <span className="pet-availability-badge reserved">Reserved</span>
+                                            )}
+                                            {pet.status === 'adopted' && (
+                                                <span className="pet-availability-badge adopted">Adopted</span>
+                                            )}
                                             {pet.isClinicallyApproved && (
                                                 <span className="clinical-approved-badge">
                                                     <ShieldCheck size={14} />

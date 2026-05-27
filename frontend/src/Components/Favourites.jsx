@@ -21,7 +21,7 @@ const Favourites = () => {
 
             try {
                 const [petsRes, favoritesRes] = await Promise.all([
-                    fetch("http://localhost:5000/api/admin/all-pets"),
+                    fetch("http://localhost:5000/api/pets"),
                     fetch("http://localhost:5000/api/adopter/favorites", {
                         headers: {
                             'Authorization': `Bearer ${user.token}`

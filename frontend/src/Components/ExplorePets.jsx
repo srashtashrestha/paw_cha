@@ -15,6 +15,7 @@ const ExplorePets = () => {
     const [notifications, setNotifications] = useState([]);
     const [showNotifDropdown, setShowNotifDropdown] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const [showFilters, setShowFilters] = useState(false);
     const [filterCriteria, setFilterCriteria] = useState({
@@ -27,6 +28,13 @@ const ExplorePets = () => {
     });
 
     const adopterName = user?.fullName || user?.name || 'User';
+
+    const normalizeText = (value) =>
+        String(value || "")
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
 
     const fetchPets = useCallback(async () => {
         try {
@@ -144,28 +152,38 @@ const ExplorePets = () => {
         return () => clearInterval(interval);
     }, [user?._id, user?.id, user?.token]);
 
-    const toggleNotifDropdown = async () => {
-        const nextState = !showNotifDropdown;
-        setShowNotifDropdown(nextState);
+    const toggleNotifDropdown = () => {
+        setShowNotifDropdown((prev) => !prev);
+    };
 
-        if (nextState && unreadCount > 0) {
-            const token = user?.token;
-            if (!token) return;
+    const handleMarkAsRead = async (notificationId) => {
+        const token = user?.token;
+        if (!token) return;
 
-            try {
-                setUnreadCount(0);
-                setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        const targetNotification = notifications.find((notification) => notification._id === notificationId);
+        if (!targetNotification || targetNotification.read) return;
 
-                await fetch(`http://localhost:5000/api/notifications/mark-all-read`, {
-                    method: 'PUT',
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json' 
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to sync notification status", err);
+        try {
+            const response = await fetch(`http://localhost:5000/api/notifications/read/${notificationId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setNotifications((prev) =>
+                    prev.map((notification) =>
+                        notification._id === notificationId
+                            ? { ...notification, read: true }
+                            : notification
+                    )
+                );
+                setUnreadCount((prev) => Math.max(0, prev - 1));
             }
+        } catch (error) {
+            console.error("Failed to mark notification as read", error);
         }
     };
 
@@ -200,8 +218,12 @@ const ExplorePets = () => {
     };
 
     const filteredPets = useMemo(() => {
+        const normalizedSearchTerm = normalizeText(searchTerm);
+        const normalizedLocationQuery = normalizeText(filterCriteria.location);
+        const normalizedTypeQuery = normalizeText(filterCriteria.type);
+        const normalizedVaccinationQuery = normalizeText(filterCriteria.vaccinationStatus);
         const hasActiveFilters =
-            filterCriteria.name.trim() !== "" ||
+            normalizedSearchTerm !== "" ||
             filterCriteria.location.trim() !== "" ||
             filterCriteria.type !== "" ||
             filterCriteria.vaccinationStatus !== "" ||
@@ -213,25 +235,37 @@ const ExplorePets = () => {
         }
 
         return pets.filter(pet => {
-        const ageValueMatch = String(pet.age ?? "").match(/\d+(\.\d+)?/);
-        const numericAge = ageValueMatch ? Number(ageValueMatch[0]) : null;
-        const ageFilterIsDefault = filterCriteria.minAge === 0 && filterCriteria.maxAge === 25;
-        const petName = String(pet.name || "").toLowerCase();
-        const petLocation = String(pet.location || "").toLowerCase();
-        const petType = String(pet.type || "").toLowerCase();
-        const matchesName = petName.includes(filterCriteria.name.toLowerCase());
-        const matchesLocation = petLocation.includes(filterCriteria.location.toLowerCase());
-        const matchesType = filterCriteria.type === "" || petType === filterCriteria.type.toLowerCase();
-        const matchesVaccination =
-            filterCriteria.vaccinationStatus === "" ||
-            (pet.vaccinationStatus || "").toLowerCase() === filterCriteria.vaccinationStatus.toLowerCase();
-        const matchesAge = numericAge === null
-            ? ageFilterIsDefault
-            : numericAge >= filterCriteria.minAge && numericAge <= filterCriteria.maxAge;
+            const ageValueMatch = String(pet.age ?? "").match(/\d+(\.\d+)?/);
+            const numericAge = ageValueMatch ? Number(ageValueMatch[0]) : null;
+            const ageFilterIsDefault = filterCriteria.minAge === 0 && filterCriteria.maxAge === 25;
+            const petName = normalizeText(pet.name);
+            const petLocation = normalizeText(pet.location);
+            const petType = normalizeText(pet.type);
+            const petBreed = normalizeText(pet.breed);
+            const matchesSearchBar =
+                normalizedSearchTerm === "" ||
+                petName.includes(normalizedSearchTerm) ||
+                petType.includes(normalizedSearchTerm) ||
+                petBreed.includes(normalizedSearchTerm) ||
+                petLocation.includes(normalizedSearchTerm);
+            const matchesLocation = petLocation.includes(normalizedLocationQuery);
+            const matchesType = filterCriteria.type === "" || petType === normalizedTypeQuery;
+            const matchesVaccination =
+                filterCriteria.vaccinationStatus === "" ||
+                normalizeText(pet.vaccinationStatus) === normalizedVaccinationQuery;
+            const matchesAge = numericAge === null
+                ? ageFilterIsDefault
+                : numericAge >= filterCriteria.minAge && numericAge <= filterCriteria.maxAge;
 
-            return matchesName && matchesLocation && matchesType && matchesVaccination && matchesAge;
+            return (
+                matchesSearchBar &&
+                matchesLocation &&
+                matchesType &&
+                matchesVaccination &&
+                matchesAge
+            );
         });
-    }, [pets, filterCriteria]);
+    }, [pets, filterCriteria, searchTerm]);
 
     const handleFilterChange = (e) => {
         const { id, value } = e.target;
@@ -255,9 +289,13 @@ const ExplorePets = () => {
                             <Search size={18} />
                             <input 
                                 type="text" 
-                                placeholder="Quick search..." 
-                                value={filterCriteria.name}
-                                onChange={(e) => setFilterCriteria({...filterCriteria, name: e.target.value})}
+                                placeholder="Search by pet name, type, breed..." 
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setSearchTerm(value);
+                                    setFilterCriteria((prev) => ({ ...prev, name: value }));
+                                }}
                             />
                         </div>
                         <button className={`icon-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
@@ -281,11 +319,18 @@ const ExplorePets = () => {
                                             <div key={n._id} className={`notif-item ${n.read ? 'read' : 'unread'}`}>
                                                 <p>{n.message}</p>
                                                 <div className="notif-actions">
-                                                     {n.type === 'approval' && (
-                                                         <button className="chat-now-btn" onClick={() => navigate('/messages')}>
-                                                            Chat Now
-                                                         </button>
-                                                     )}
+                                                    <div className="notif-action-buttons">
+                                                        {n.type === 'approval' && (
+                                                            <button className="chat-now-btn" onClick={() => navigate('/messages')}>
+                                                                Chat Now
+                                                            </button>
+                                                        )}
+                                                        {!n.read && (
+                                                            <button className="mark-read-btn" onClick={() => handleMarkAsRead(n._id)}>
+                                                                Mark as read
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                      <span className="notif-time">{new Date(n.createdAt).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
@@ -316,7 +361,18 @@ const ExplorePets = () => {
                         
                         <div className="filter-row">
                             <div className="filter-group">
-                                <input type="text" id="name" placeholder="Search By Pet Name" className="filter-input" value={filterCriteria.name} onChange={handleFilterChange} />
+                                <input
+                                    type="text"
+                                    id="name"
+                                    placeholder="Search by pet name, type, or breed"
+                                    className="filter-input"
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setSearchTerm(value);
+                                        setFilterCriteria((prev) => ({ ...prev, name: value }));
+                                    }}
+                                />
                             </div>
                             <div className="filter-group">
                                 <input type="text" id="location" placeholder="Search Pets By Location" className="filter-input" value={filterCriteria.location} onChange={handleFilterChange}/>
@@ -361,7 +417,15 @@ const ExplorePets = () => {
                         </div>
 
                         <div className="filter-actions">
-                            <button className="filter-clear-btn" onClick={() => setFilterCriteria({name: "", location: "", type: "", vaccinationStatus: "", minAge: 0, maxAge: 25})}>Clear Filters</button>
+                            <button
+                                className="filter-clear-btn"
+                                onClick={() => {
+                                    setSearchTerm("");
+                                    setFilterCriteria({name: "", location: "", type: "", vaccinationStatus: "", minAge: 0, maxAge: 25});
+                                }}
+                            >
+                                Clear Filters
+                            </button>
                             <button className="filter-search-btn" onClick={() => setShowFilters(false)}>Apply Filters</button>
                         </div>
                     </section>
@@ -374,6 +438,8 @@ const ExplorePets = () => {
                         <div className="pets-static-grid">
                             {filteredPets.length > 0 ? filteredPets.map(pet => {
                                 const isApplied = userApplications.includes(String(pet._id));
+                                const isReserved = pet.status === 'reserved';
+                                const isAdopted = pet.status === 'adopted';
                                 return (
                                     <div key={pet._id} className={`pet-item-card ${isApplied ? 'pet-applied' : ''}`}>
                                         <div className="pet-thumb">
@@ -390,6 +456,8 @@ const ExplorePets = () => {
                                         <div className="pet-info">
                                             <div className="pet-title-row">
                                                 <h3>{pet.name}</h3>
+                                                {isReserved && <span className="pet-availability-badge reserved">Reserved</span>}
+                                                {isAdopted && <span className="pet-availability-badge adopted">Adopted</span>}
                                                 {pet.isClinicallyApproved && (
                                                     <span className="clinical-approved-badge">
                                                         <ShieldCheck size={14} />

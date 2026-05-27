@@ -25,7 +25,7 @@ const PetListing = () => {
         const fetchPets = async () => {
             setLoading(true);
             try {
-                const response = await fetch('http://localhost:5000/api/admin/all-pets', {
+                const response = await fetch('http://localhost:5000/api/pets', {
                     cache: 'no-store'
                 });
                 const data = await response.json();

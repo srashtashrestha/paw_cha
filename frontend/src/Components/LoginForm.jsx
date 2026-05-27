@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Professional Context Hook
+import { Eye, EyeOff } from 'lucide-react';
 import './LoginForm.css';
 
 // Importing assets
@@ -11,6 +12,7 @@ const LoginForm = () => {
   const [isDonor, setIsDonor] = useState(false); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   
   // Accessing the central Auth function
@@ -28,6 +30,17 @@ const LoginForm = () => {
       const data = await response.json();
 
       if (data.success) {
+        const selectedRole = isDonor ? 'donor' : 'adopter';
+
+        if (data.role !== selectedRole) {
+          alert(
+            selectedRole === 'donor'
+              ? 'This account is registered as an adopter. Please switch to the Adopter tab to log in.'
+              : 'This account is registered as a donor. Please switch to the Donor tab to log in.'
+          );
+          return;
+        }
+
         /**
          * PROFESSIONAL UPDATE:
          * We pass the user data to the AuthContext. 
@@ -96,13 +109,23 @@ const LoginForm = () => {
 
           <div className="field-group">
             <label>Password:</label>
-            <input 
-              type="password" 
-              placeholder="••••••••••••"
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-            />
+            <div className="password-input-wrap">
+              <input 
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••••••"
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <div className="forgot-password-container">
               <span className="forgot-link" onClick={() => navigate('/forgot-password')}>
                 Forgot Password?

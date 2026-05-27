@@ -18,6 +18,7 @@ import Favourites from './Components/Favourites';
 import Settings from './Components/Settings';
 import ExplorePets from './Components/ExplorePets';
 import Messages from './Components/Messages';
+import PetCare from './Components/PetCare';
 
 const router = createBrowserRouter([
   {
@@ -99,6 +100,10 @@ const router = createBrowserRouter([
   {
     path: "/messages",
     element: <Messages/>
+  },
+  {
+    path: "/pet-care",
+    element: <PetCare/>
   }
 ]);
 

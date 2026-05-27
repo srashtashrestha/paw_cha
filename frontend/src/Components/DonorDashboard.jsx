@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, RefreshCcw, Mail, Phone, Calendar, ChevronLeft, Send } from 'lucide-react';
+import { MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, RefreshCcw, Mail, Phone, Calendar, ChevronLeft, Send, Bell } from 'lucide-react';
 import './DonorDashboard.css';
 import logo from '../Assets/Logo/Logo.png'; 
 import { io } from 'socket.io-client';
@@ -23,6 +23,9 @@ const DonorDashboard = () => {
     const [chatMessages, setChatMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const messagesEndRef = useRef(null);
+    const [notifications, setNotifications] = useState([]);
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const [petData, setPetData] = useState({
         name: '', type: 'Dog', breed: '', age: '', weight: '',
@@ -32,6 +35,13 @@ const DonorDashboard = () => {
     });
 
     const donorName = user?.name || 'Donor';
+    const getStatusConfirmationLabel = (status) => {
+        if (status === "approved") return "approve this inquiry for chat";
+        if (status === "finalized") return "finalize this adoption";
+        if (status === "declined") return "decline this reserved adoption";
+        if (status === "rejected") return "reject this inquiry";
+        return `${status} this inquiry`;
+    };
 
     // --- FETCHING DATA ---
     
@@ -107,6 +117,30 @@ const DonorDashboard = () => {
         }
     }, [fetchMyPets, fetchInquiries, user?.token]);
 
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            if (!user?.token) return;
+
+            try {
+                const response = await fetch("http://localhost:5000/api/notifications", {
+                    headers: { Authorization: `Bearer ${user.token}` }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    setNotifications(result.notifications || []);
+                    setUnreadCount((result.notifications || []).filter((notification) => !notification.read).length);
+                }
+            } catch (error) {
+                console.error("Error fetching donor notifications:", error);
+            }
+        };
+
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 15000);
+        return () => clearInterval(interval);
+    }, [user?.token]);
+
     // NEW: Effect to fetch messages when tab or activeChat changes
     useEffect(() => {
         if (activeTab === 'chat' && activeChat?._id) {
@@ -151,6 +185,67 @@ useEffect(() => {
     socket.current.on("receive_message", handleNewMessage);
     return () => socket.current.off("receive_message", handleNewMessage);
 }, [activeChat]);
+
+useEffect(() => {
+    if (!socket.current) return;
+
+    const handleIncomingNotification = (notification) => {
+        setNotifications((prev) => {
+            const exists = prev.some((item) => item._id === notification._id);
+            if (exists) return prev;
+            return [notification, ...prev];
+        });
+
+        setUnreadCount((prev) => {
+            if (notification.read) return prev;
+            return prev + 1;
+        });
+
+        fetchInquiries();
+    };
+
+    socket.current.on("notification_created", handleIncomingNotification);
+    return () => socket.current.off("notification_created", handleIncomingNotification);
+}, [fetchInquiries]);
+
+    const toggleNotifDropdown = () => {
+        setShowNotifDropdown((prev) => !prev);
+    };
+
+    const handleMarkNotificationRead = async (notificationId) => {
+        if (!user?.token) return;
+
+        const targetNotification = notifications.find((notification) => notification._id === notificationId);
+        if (!targetNotification || targetNotification.read) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/notifications/read/${notificationId}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${user.token}`
+                }
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                setNotifications((prev) =>
+                    prev.map((notification) =>
+                        notification._id === notificationId
+                            ? { ...notification, read: true }
+                            : notification
+                    )
+                );
+                setUnreadCount((prev) => Math.max(0, prev - 1));
+            }
+        } catch (error) {
+            console.error("Failed to mark donor notification as read:", error);
+        }
+    };
+
+    const handleNotificationAction = () => {
+        setShowNotifDropdown(false);
+        setActiveTab("inquiries");
+    };
     // --- HANDLERS ---
 
     const handleSendMessage = async (e) => {
@@ -187,7 +282,7 @@ useEffect(() => {
 };
 
     const handleStatusUpdate = async (inquiryId, newStatus) => {
-        if (!window.confirm(`Are you sure you want to ${newStatus} this inquiry?`)) return;
+        if (!window.confirm(`Are you sure you want to ${getStatusConfirmationLabel(newStatus)}?`)) return;
 
         try {
             const response = await fetch(`http://localhost:5000/api/inquiries/status/${inquiryId}`, {
@@ -201,17 +296,50 @@ useEffect(() => {
             const result = await response.json();
 
             if (result.success) {
-                setInquiries(prev => prev.map(inv => inv._id === inquiryId ? { ...inv, status: newStatus } : inv));
+                const currentInquiry = inquiries.find((inv) => inv._id === inquiryId);
+                const resolvedStatus = result.inquiry?.status || newStatus;
+                const nextInquiry = currentInquiry
+                    ? {
+                        ...currentInquiry,
+                        ...(result.inquiry || {}),
+                        petId: result.inquiry?.petId || currentInquiry.petId,
+                        adopterId: result.inquiry?.adopterId || currentInquiry.adopterId,
+                        status: resolvedStatus
+                    }
+                    : null;
+
+                setInquiries((prev) =>
+                    prev.map((inv) => {
+                        if (inv._id !== inquiryId) return inv;
+                        return nextInquiry || { ...inv, ...(result.inquiry || {}), status: resolvedStatus };
+                    })
+                );
+
+                setActiveChat((prev) => {
+                    if (!prev || prev._id !== inquiryId) return prev;
+                    return {
+                        ...prev,
+                        ...(result.inquiry || {}),
+                        petId: result.inquiry?.petId || prev.petId,
+                        adopterId: result.inquiry?.adopterId || prev.adopterId,
+                        status: resolvedStatus
+                    };
+                });
+
+                fetchInquiries();
+                fetchMyPets();
 
                 if (newStatus === 'approved') {
-                    const targetInq = inquiries.find(i => i._id === inquiryId);
-                    if (targetInq) {
-                        handleMessageClick(targetInq);
+                    if (nextInquiry) {
+                        handleMessageClick(nextInquiry);
                     }
                 }
+            } else {
+                alert(result.message || "Failed to update inquiry status.");
             }
         } catch (error) {
             console.error("Error updating status:", error);
+            alert("Unable to update inquiry right now.");
         }
     };
 
@@ -420,7 +548,65 @@ useEffect(() => {
                                 <h1>{activeTab === 'inventory' ? 'Manage Pet Listings' : 'Adoption Inquiries'}</h1>
                                 <p className="subtitle">Track your listings and respond to potential adopters.</p>
                             </div>
-                            <div className="header-actions" style={{ display: 'flex', gap: '10px' }}>
+                            <div className="header-actions">
+                                <div className="donor-notification-wrapper">
+                                    <button
+                                        className={`donor-notif-btn ${unreadCount > 0 ? 'has-unread' : ''}`}
+                                        onClick={toggleNotifDropdown}
+                                        type="button"
+                                    >
+                                        <Bell size={20} />
+                                        {unreadCount > 0 && <span className="donor-notif-badge">{unreadCount}</span>}
+                                    </button>
+
+                                    {showNotifDropdown && (
+                                        <div className="donor-notif-dropdown">
+                                            <div className="donor-notif-header">
+                                                <h4>Notifications</h4>
+                                                {unreadCount > 0 && <span className="donor-unread-dot"></span>}
+                                            </div>
+
+                                            {notifications.length > 0 ? (
+                                                notifications.map((notification) => (
+                                                    <div
+                                                        key={notification._id}
+                                                        className={`donor-notif-item ${notification.read ? 'read' : 'unread'}`}
+                                                    >
+                                                        <p>{notification.message}</p>
+                                                        <div className="donor-notif-actions">
+                                                            <div className="donor-notif-action-buttons">
+                                                                <button
+                                                                    type="button"
+                                                                    className="donor-notif-link"
+                                                                    onClick={handleNotificationAction}
+                                                                >
+                                                                    View Inquiries
+                                                                </button>
+                                                                {!notification.read && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="donor-mark-read-btn"
+                                                                        onClick={() => handleMarkNotificationRead(notification._id)}
+                                                                    >
+                                                                        Mark as read
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <span className="donor-notif-time">
+                                                                {new Date(notification.createdAt).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="donor-empty-notif">
+                                                    <Bell size={30} opacity={0.3} />
+                                                    <p>No new updates</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                                 <button className="refresh-btn" onClick={activeTab === 'inventory' ? fetchMyPets : fetchInquiries}>
                                     <RefreshCcw size={18} color="#5d4037" />
                                 </button>
@@ -442,7 +628,12 @@ useEffect(() => {
                                     ) : ( <div className="placeholder-img"><Camera size={32} /></div> )}
                                 </div>
                                 <div className="pet-card-content">
-                                    <h2 className="pet-card-title">{pet.name}</h2>
+                                    <div className="pet-card-title-row">
+                                        <h2 className="pet-card-title">{pet.name}</h2>
+                                        <span className={`pet-status-chip ${pet.status || 'available'}`}>
+                                            {pet.status || 'available'}
+                                        </span>
+                                    </div>
                                     <p className="pet-card-meta">{pet.age} • {pet.type}</p>
                                     <div className="pet-card-location"><MapPin size={14} /> <span>{pet.location}</span></div>
                                     <div className="pet-card-actions">
@@ -461,17 +652,23 @@ useEffect(() => {
                                 <p>No adoption inquiries yet.</p>
                             </div>
                         ) : (
-                            inquiries.map((inq) => (
-                                <div key={inq._id} className="inquiry-card">
-                                    <div className="inquiry-header">
+                            inquiries.map((inq) => {
+                                const inquiryStatusLabel =
+                                    inq.status === 'approved' && inq.petId?.status === 'reserved'
+                                        ? 'reserved'
+                                        : inq.status;
+
+                                return (
+                                <div key={inq._id} className={`inquiry-card inquiry-${inq.status}`}>
+                                    <div className="inquiry-profile-column">
                                         <div className="adopter-profile">
                                             <div className="mini-avatar">{inq.adopterId?.fullName?.[0] || 'A'}</div>
-                                            <div>
+                                            <div className="adopter-info-text">
                                                 <h3>{inq.adopterId?.fullName || inq.adopterName}</h3>
-                                                <p className="app-for">Interested in <strong>{inq.petId?.name || 'Deleted Pet'}</strong></p>
+                                                <p className="app-for"><span className="meta-label">Interested in</span> <strong>{inq.petId?.name || 'Deleted Pet'}</strong></p>
                                             </div>
                                         </div>
-                                        <span className={`status-pill ${inq.status}`}>{inq.status}</span>
+                                        <span className={`status-pill ${inquiryStatusLabel}`}>{inquiryStatusLabel}</span>
                                     </div>
                                     
                                     <div className="inquiry-body">
@@ -479,11 +676,12 @@ useEffect(() => {
                                             <span><Mail size={14}/> {inq.adopterId?.email || inq.adopterEmail}</span>
                                             {inq.phone && <span><Phone size={14}/> {inq.phone}</span>}
                                             <span><Calendar size={14}/> {new Date(inq.createdAt).toLocaleDateString()}</span>
+                                            {inq.petId?.status && <span><MapPin size={14}/> <span className="meta-label">Pet</span> {inq.petId.status}</span>}
                                         </div>
                                         
                                         {inq.motivation && (
                                             <div className="motivation-box">
-                                                <h4 style={{ fontSize: '12px', color: '#8d6e63', marginBottom: '4px' }}>Motivation:</h4>
+                                                <h4 className="meta-label">Motivation</h4>
                                                 <p>"{inq.motivation}"</p>
                                             </div>
                                         )}
@@ -493,16 +691,25 @@ useEffect(() => {
                                         {inq.status === 'pending' ? (
                                             <>
                                                 <button className="delete-action-btn" onClick={() => handleStatusUpdate(inq._id, 'rejected')}>Reject</button>
-                                                <button className="edit-action-btn" onClick={() => handleStatusUpdate(inq._id, 'approved')}>Approve Adoption</button>
+                                                <button className="edit-action-btn" onClick={() => handleStatusUpdate(inq._id, 'approved')}>Approve Inquiry for Chat</button>
                                             </>
                                         ) : inq.status === 'approved' ? (
-                                            <button className="message-btn" onClick={() => handleMessageClick(inq)} style={{ backgroundColor: '#5d4037', color: 'white', padding: '8px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
-                                                <MessageSquare size={16} /> Message Adopter
-                                            </button>
+                                            <>
+                                                <button className="danger-action-btn" onClick={() => handleStatusUpdate(inq._id, 'declined')}>Decline Adoption</button>
+                                                <button className="success-action-btn" onClick={() => handleStatusUpdate(inq._id, 'finalized')}>Finalize Adoption</button>
+                                                <button className="message-btn" onClick={() => handleMessageClick(inq)} style={{ backgroundColor: '#5d4037', color: 'white', padding: '8px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
+                                                    <MessageSquare size={16} /> Message Adopter
+                                                </button>
+                                            </>
+                                        ) : inq.status === 'adopted' ? (
+                                            <span className="info-state-text">Adoption finalized</span>
+                                        ) : inq.status === 'closed' ? (
+                                            <span className="info-state-text">Closed after adoption</span>
                                         ) : null}
                                     </div>
                                 </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 ) : null}

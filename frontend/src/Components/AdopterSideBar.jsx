@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Layout, MessageSquare, ClipboardList, Heart, Settings, LogOut } from 'lucide-react';
+import { Layout, MessageSquare, ClipboardList, Heart, Settings, LogOut, ShieldCheck } from 'lucide-react';
 import logo from '../Assets/Logo/Logo.png';
 import './AdopterSideBar.css'; 
 
@@ -40,6 +40,9 @@ const AdopterSidebar = () => {
                 </button>
                 <button className={isActive('/favourites')} onClick={() => navigate('/favourites')}>
                     <Heart size={20} /> Favourites
+                </button>
+                <button className={isActive('/pet-care')} onClick={() => navigate('/pet-care')}>
+                    <ShieldCheck size={20} /> Pet Care
                 </button>
             </nav>
 

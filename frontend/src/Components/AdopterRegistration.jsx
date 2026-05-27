@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import './LoginForm.css';
 import logo from '../Assets/Logo/Logo.png';  
 
@@ -10,6 +11,8 @@ const AdopterRegister = () => {
         password: '',
         confirmPassword: ''
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -79,23 +82,43 @@ const AdopterRegister = () => {
                     </div>
                     <div className="field-group">
                         <label>Password</label>
-                        <input 
-                            type="password" 
-                            required 
-                            placeholder="Create a password"
-                            value={formData.password}
-                            onChange={(e) => setFormData({...formData, password: e.target.value})} 
-                        />
+                        <div className="password-input-wrap">
+                            <input 
+                                type={showPassword ? "text" : "password"}
+                                required 
+                                placeholder="Create a password"
+                                value={formData.password}
+                                onChange={(e) => setFormData({...formData, password: e.target.value})} 
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle-btn"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                onClick={() => setShowPassword((prev) => !prev)}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
                     <div className="field-group">
                         <label>Confirm Password</label>
-                        <input 
-                            type="password" 
-                            required 
-                            placeholder="Repeat password"
-                            value={formData.confirmPassword}
-                            onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
-                        />
+                        <div className="password-input-wrap">
+                            <input 
+                                type={showConfirmPassword ? "text" : "password"}
+                                required 
+                                placeholder="Repeat password"
+                                value={formData.confirmPassword}
+                                onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle-btn"
+                                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                            >
+                                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
                     
                     <button type="submit" className="submit-btn">Sign Up</button>

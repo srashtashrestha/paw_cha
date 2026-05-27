@@ -98,6 +98,36 @@ html, body {
   box-sizing: border-box;
 }
 
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrap input {
+  padding-right: 44px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: #7a6a63;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #5d4037;
+}
+
 /* Buttons */
 .submit-btn {
   width: 100%;

@@ -100,13 +100,43 @@
     position: absolute;
     top: 54px;
     right: 0;
-    width: 320px;
+    width: min(360px, calc(100vw - 32px));
+    min-width: 320px;
+    max-height: min(420px, calc(100vh - 120px));
+    overflow-y: auto;
     background: white;
     border-radius: var(--field-radius);
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     padding: 15px;
     z-index: 1000;
     border: 1px solid var(--border-light);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(230, 194, 115, 0.9) #f6f1e6;
+}
+
+.notif-dropdown::-webkit-scrollbar {
+    width: 8px;
+}
+
+.notif-dropdown::-webkit-scrollbar-track {
+    background: #f6f1e6;
+    border-radius: 999px;
+}
+
+.notif-dropdown::-webkit-scrollbar-thumb {
+    background: rgba(230, 194, 115, 0.9);
+    border-radius: 999px;
+}
+
+.notif-dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--dark-gold);
+}
+
+@media (max-width: 480px) {
+    .notif-dropdown {
+        min-width: 0;
+        right: -12px;
+    }
 }
 
 .notif-header {
@@ -145,15 +175,22 @@
 }
 
 .notif-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+  }
 
+  .notif-action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+  }
+  
 .chat-now-btn {
-    background: var(--primary-gold);
-    border: none;
+      background: var(--primary-gold);
+      border: none;
     color: var(--text-dark);
     padding: 8px 14px;
     border-radius: 12px;
@@ -164,10 +201,29 @@
 }
 
 .chat-now-btn:hover {
-    background: var(--dark-gold);
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: var(--button-shadow);
-}
+      background: var(--dark-gold);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: var(--button-shadow);
+  }
+
+  .mark-read-btn {
+      background: transparent;
+      border: 1px solid rgba(124, 77, 255, 0.18);
+      color: var(--text-muted);
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--bounce-transition);
+  }
+
+  .mark-read-btn:hover {
+      border-color: var(--primary-gold);
+      background: #fff;
+      color: var(--text-dark);
+      transform: translateY(-2px);
+  }
 
 .notif-time {
     color: var(--text-muted);
@@ -254,6 +310,31 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 0.5rem;
+}
+
+.pet-availability-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-top: 0.8rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.pet-availability-badge.reserved {
+    background: #fff8e1;
+    border: 1px solid rgba(178, 106, 0, 0.18);
+    color: #b26a00;
+}
+
+.pet-availability-badge.adopted {
+    background: var(--status-approved-bg);
+    border: 1px solid rgba(46, 125, 50, 0.18);
+    color: var(--status-approved-text);
 }
 
 .utility-btns {

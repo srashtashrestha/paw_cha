@@ -24,6 +24,12 @@ const AdopterPetProfile = () => {
     const [showNotifDropdown, setShowNotifDropdown] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const adopterName = user?.name || 'User';
+    const isReservedForAnotherAdopter =
+        pet?.status === 'reserved' &&
+        String(pet?.reservedFor || '') !== String(user?.id || user?._id || '');
+    const isAlreadyAdopted =
+        pet?.status === 'adopted' &&
+        String(pet?.adoptedBy || '') !== String(user?.id || user?._id || '');
 
     // useEffect(() => {
     //     const fetchPetDetails = async () => {
@@ -112,27 +118,37 @@ const AdopterPetProfile = () => {
         return () => clearInterval(interval);
     }, [user?.token]);
 
-    const toggleNotifDropdown = async () => {
-        const nextState = !showNotifDropdown;
-        setShowNotifDropdown(nextState);
+    const toggleNotifDropdown = () => {
+        setShowNotifDropdown((prev) => !prev);
+    };
 
-        if (nextState && unreadCount > 0) {
-            if (!user?.token) return;
+    const handleMarkAsRead = async (notificationId) => {
+        if (!user?.token) return;
 
-            try {
-                setUnreadCount(0);
-                setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        const targetNotification = notifications.find((notification) => notification._id === notificationId);
+        if (!targetNotification || targetNotification.read) return;
 
-                await fetch(`http://localhost:5000/api/notifications/mark-all-read`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${user.token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to sync notification status", err);
+        try {
+            const response = await fetch(`http://localhost:5000/api/notifications/read/${notificationId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${user.token}`
+                }
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setNotifications((prev) =>
+                    prev.map((notification) =>
+                        notification._id === notificationId
+                            ? { ...notification, read: true }
+                            : notification
+                    )
+                );
+                setUnreadCount((prev) => Math.max(0, prev - 1));
             }
+        } catch (error) {
+            console.error("Failed to mark notification as read", error);
         }
     };
 
@@ -264,11 +280,18 @@ const AdopterPetProfile = () => {
                                         <div key={n._id} className={`notif-item ${n.read ? 'read' : 'unread'}`}>
                                             <p>{n.message}</p>
                                             <div className="notif-actions">
-                                                {n.type === 'approval' && (
-                                                    <button className="chat-now-btn" onClick={() => navigate('/messages')}>
-                                                        Chat Now
-                                                    </button>
-                                                )}
+                                                <div className="notif-action-buttons">
+                                                    {n.type === 'approval' && (
+                                                        <button className="chat-now-btn" onClick={() => navigate('/messages')}>
+                                                            Chat Now
+                                                        </button>
+                                                    )}
+                                                    {!n.read && (
+                                                        <button className="mark-read-btn" onClick={() => handleMarkAsRead(n._id)}>
+                                                            Mark as read
+                                                        </button>
+                                                    )}
+                                                </div>
                                                 <span className="notif-time">{new Date(n.createdAt).toLocaleDateString()}</span>
                                             </div>
                                         </div>
@@ -297,7 +320,11 @@ const AdopterPetProfile = () => {
                 <div className="profile-main-grid">
                     <div className="details-panel bento-card">
                         <div className="title-section">
-                            <h1>Meet {pet.name}</h1>
+                            <div>
+                                <h1>Meet {pet.name}</h1>
+                                {pet.status === 'reserved' && <span className="pet-availability-badge reserved">Reserved</span>}
+                                {pet.status === 'adopted' && <span className="pet-availability-badge adopted">Adopted</span>}
+                            </div>
                             <div className="utility-btns">
                                 <button className="circ-action" onClick={handleShare}><Share2 size={18} /></button>
                                 <button className={`circ-action ${isFavorited ? 'is-fav' : ''}`} onClick={toggleFavorite}>
@@ -325,12 +352,20 @@ const AdopterPetProfile = () => {
                             <p>{pet.reasonForAdoption || pet.description || "Looking for a forever home."}</p>
                         </div>
 
-                        <button 
+<button 
     className={`apply-primary-btn ${hasApplied ? 'btn-disabled' : ''}`} 
     onClick={handleApplyToAdopt}
-    disabled={hasApplied || applying}
+    disabled={hasApplied || applying || isReservedForAnotherAdopter || isAlreadyAdopted}
 >
-    {hasApplied ? 'Application Submitted' : applying ? 'Sending...' : 'Apply to Adopt'}
+    {hasApplied
+        ? 'Application Submitted'
+        : isReservedForAnotherAdopter
+            ? 'Currently Reserved'
+            : isAlreadyAdopted
+                ? 'Already Adopted'
+                : applying
+                    ? 'Sending...'
+                    : 'Apply to Adopt'}
 </button>
                     </div>
 
