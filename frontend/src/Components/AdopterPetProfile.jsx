@@ -17,6 +17,7 @@ const AdopterPetProfile = () => {
     const [isFavorited, setIsFavorited] = useState(false);
     
     const [showModal, setShowModal] = useState(false);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [motivation, setMotivation] = useState('');
     const [additionalInfo, setAdditionalInfo] = useState('');
     const [hasApplied, setHasApplied] = useState(false);
@@ -56,6 +57,7 @@ const AdopterPetProfile = () => {
             const petData = await petRes.json();
             if (petData.success) {
                 setPet(petData.pet);
+                setSelectedImageIndex(0);
             }
 
             // CHECK: Has the user already applied?
@@ -255,6 +257,9 @@ const AdopterPetProfile = () => {
     if (loading) return <div className="loader">Loading Profile...</div>;
     if (!pet) return <div className="error-msg">Pet not found.</div>;
 
+    const petImages = pet.images?.length ? pet.images : [];
+    const selectedImage = petImages[selectedImageIndex] || petImages[0] || null;
+
     return (
         <div className="pawcha-profile-container">
             <header className="profile-top-nav">
@@ -345,12 +350,54 @@ const AdopterPetProfile = () => {
                                 <div className="h-tag"><CheckCircle2 size={16} /> {pet.vaccinationStatus || 'Vaccinated'}</div>
                                 <div className="h-tag"><CheckCircle2 size={16} /> {pet.neuteredStatus || 'Neutered'}</div>
                             </div>
+                            {pet.vetFollowUp && (
+                                <div className="vet-note">
+                                    Next follow-up: {new Date(pet.vetFollowUp).toLocaleDateString()}
+                                </div>
+                            )}
                         </section>
 
+                        <div className="profile-facts-grid">
+                            <div className="fact-card">
+                                <span className="fact-label">Breed</span>
+                                <strong>{pet.breed || 'Mixed'}</strong>
+                            </div>
+                            <div className="fact-card">
+                                <span className="fact-label">Age</span>
+                                <strong>{pet.age || 'Unknown'}</strong>
+                            </div>
+                            <div className="fact-card">
+                                <span className="fact-label">Weight</span>
+                                <strong>{pet.weight || 'Not shared'}</strong>
+                            </div>
+                            <div className="fact-card">
+                                <span className="fact-label">Location</span>
+                                <strong>{pet.location || 'Nepal'}</strong>
+                            </div>
+                        </div>
+
                         <div className="description-box">
-                            <h4>Description</h4>
+                            <h4>Adoption Story</h4>
                             <p>{pet.reasonForAdoption || pet.description || "Looking for a forever home."}</p>
                         </div>
+
+                        {pet.personality && (
+                            <section className="personality-section">
+                                <h3>Personality</h3>
+                                <div className="detail-text-block">
+                                    <p>{pet.personality}</p>
+                                </div>
+                            </section>
+                        )}
+
+                        {pet.lovesLikes && (
+                            <section className="loves-section">
+                                <h3>Loves & Likes</h3>
+                                <div className="detail-text-block">
+                                    <p>{pet.lovesLikes}</p>
+                                </div>
+                            </section>
+                        )}
 
 <button 
     className={`apply-primary-btn ${hasApplied ? 'btn-disabled' : ''}`} 
@@ -370,8 +417,31 @@ const AdopterPetProfile = () => {
                     </div>
 
                     <div className="visuals-panel">
-                        <div className="main-img-wrap bento-card">
-                            <img src={pet.images?.[0] ? `http://localhost:5000/uploads/${pet.images[0]}` : '/placeholder-pet.png'} alt={pet.name} />
+                        <div className="image-gallery">
+                            <div className="main-img-wrap bento-card">
+                                <img
+                                    src={selectedImage ? `http://localhost:5000/uploads/${selectedImage}` : '/placeholder-pet.png'}
+                                    alt={pet.name}
+                                />
+                            </div>
+
+                            {petImages.length > 1 && (
+                                <div className="thumb-strip">
+                                    {petImages.map((image, index) => (
+                                        <button
+                                            key={`${image}-${index}`}
+                                            type="button"
+                                            className={`thumb-btn ${selectedImageIndex === index ? 'active' : ''}`}
+                                            onClick={() => setSelectedImageIndex(index)}
+                                        >
+                                            <img
+                                                src={`http://localhost:5000/uploads/${image}`}
+                                                alt={`${pet.name} ${index + 1}`}
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className="care-card bento-card">

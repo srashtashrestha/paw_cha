@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, RefreshCcw, Mail, Phone, Calendar, ChevronLeft, Send, Bell } from 'lucide-react';
+import { MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, RefreshCcw, Mail, Phone, Calendar, ChevronLeft, Send, Bell, Activity, Users, Inbox, CheckCircle2 } from 'lucide-react';
 import './DonorDashboard.css';
 import logo from '../Assets/Logo/Logo.png'; 
 import { io } from 'socket.io-client';
-// const socket = io("http://localhost:5000");
 
 const DonorDashboard = () => {
     const { user, logout } = useAuth();
@@ -44,8 +43,6 @@ const DonorDashboard = () => {
     };
 
     // --- FETCHING DATA ---
-    
-
     const fetchMyPets = useCallback(async () => {
         if (!user?.token) return;
         try {
@@ -83,7 +80,6 @@ const DonorDashboard = () => {
                 headers: { "Authorization": `Bearer ${user.token}` }
             });
             const result = await response.json();
-            // Check if backend returns 'messages' or 'data'
             if (result.success) {
                 setChatMessages(result.messages || result.data || []);
             }
@@ -94,7 +90,6 @@ const DonorDashboard = () => {
 
     useEffect(() => {
         if (user?.token) {
-            // Replace with your actual backend URL
             socket.current = io("http://localhost:5000", {
                 auth: { token: user.token }
             });
@@ -103,7 +98,6 @@ const DonorDashboard = () => {
                 console.log("Connected to socket:", socket.current.id);
             });
 
-            // Cleanup on unmount
             return () => {
                 if (socket.current) socket.current.disconnect();
             };
@@ -141,7 +135,6 @@ const DonorDashboard = () => {
         return () => clearInterval(interval);
     }, [user?.token]);
 
-    // NEW: Effect to fetch messages when tab or activeChat changes
     useEffect(() => {
         if (activeTab === 'chat' && activeChat?._id) {
             fetchMessages(activeChat._id);
@@ -152,61 +145,60 @@ const DonorDashboard = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [chatMessages]);
 
+    useEffect(() => {
+        if (!socket.current) return;
+        if (!activeChat?._id) return;
 
-useEffect(() => {
-    if (!socket.current) return;
-    if (!activeChat?._id) return;
+        const handleNewMessage = (msg) => {
+            const incomingChatId = String(msg.chatId || msg.inquiryId);
+            const currentChatId = String(activeChat._id);
 
-    const handleNewMessage = (msg) => {
-        const incomingChatId = String(msg.chatId || msg.inquiryId);
-        const currentChatId = String(activeChat._id);
+            if (incomingChatId !== currentChatId) return;
 
-        if (incomingChatId !== currentChatId) return;
+            setChatMessages((prev) => {
+                const exists = prev.find((m) => {
+                    if (msg._id && m._id) return m._id === msg._id;
 
-        setChatMessages((prev) => {
-            const exists = prev.find((m) => {
-                if (msg._id && m._id) return m._id === msg._id;
+                    const existingSenderId = String(m.senderId?._id || m.senderId);
+                    const incomingSenderId = String(msg.senderId?._id || msg.senderId);
 
-                const existingSenderId = String(m.senderId?._id || m.senderId);
-                const incomingSenderId = String(msg.senderId?._id || msg.senderId);
+                    return (
+                        m.text === msg.text &&
+                        existingSenderId === incomingSenderId &&
+                        m.createdAt === msg.createdAt
+                    );
+                });
 
-                return (
-                    m.text === msg.text &&
-                    existingSenderId === incomingSenderId &&
-                    m.createdAt === msg.createdAt
-                );
+                if (exists) return prev;
+                return [...prev, msg];
+            });
+        };
+
+        socket.current.on("receive_message", handleNewMessage);
+        return () => socket.current.off("receive_message", handleNewMessage);
+    }, [activeChat]);
+
+    useEffect(() => {
+        if (!socket.current) return;
+
+        const handleIncomingNotification = (notification) => {
+            setNotifications((prev) => {
+                const exists = prev.some((item) => item._id === notification._id);
+                if (exists) return prev;
+                return [notification, ...prev];
             });
 
-            if (exists) return prev;
-            return [...prev, msg];
-        });
-    };
+            setUnreadCount((prev) => {
+                if (notification.read) return prev;
+                return prev + 1;
+            });
 
-    socket.current.on("receive_message", handleNewMessage);
-    return () => socket.current.off("receive_message", handleNewMessage);
-}, [activeChat]);
+            fetchInquiries();
+        };
 
-useEffect(() => {
-    if (!socket.current) return;
-
-    const handleIncomingNotification = (notification) => {
-        setNotifications((prev) => {
-            const exists = prev.some((item) => item._id === notification._id);
-            if (exists) return prev;
-            return [notification, ...prev];
-        });
-
-        setUnreadCount((prev) => {
-            if (notification.read) return prev;
-            return prev + 1;
-        });
-
-        fetchInquiries();
-    };
-
-    socket.current.on("notification_created", handleIncomingNotification);
-    return () => socket.current.off("notification_created", handleIncomingNotification);
-}, [fetchInquiries]);
+        socket.current.on("notification_created", handleIncomingNotification);
+        return () => socket.current.off("notification_created", handleIncomingNotification);
+    }, [fetchInquiries]);
 
     const toggleNotifDropdown = () => {
         setShowNotifDropdown((prev) => !prev);
@@ -246,40 +238,40 @@ useEffect(() => {
         setShowNotifDropdown(false);
         setActiveTab("inquiries");
     };
+
     // --- HANDLERS ---
-
     const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !activeChat) return;
+        e.preventDefault();
+        if (!newMessage.trim() || !activeChat) return;
 
-    const messageData = {
-        chatId: activeChat._id,
-        text: newMessage
-    };
+        const messageData = {
+            chatId: activeChat._id,
+            text: newMessage
+        };
 
-    const savedMsg = newMessage;
-    setNewMessage("");
+        const savedMsg = newMessage;
+        setNewMessage("");
 
-    try {
-        const response = await fetch("http://localhost:5000/api/messages/send", {
-            method: "POST",
-            headers: { 
-                "Authorization": `Bearer ${user.token}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(messageData)
-        });
-        
-        const result = await response.json();
-        if (!result.success) {
+        try {
+            const response = await fetch("http://localhost:5000/api/messages/send", {
+                method: "POST",
+                headers: { 
+                    "Authorization": `Bearer ${user.token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(messageData)
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                setNewMessage(savedMsg);
+                alert("Message failed to send.");
+            }
+        } catch (error) {
+            console.error("Error sending message:", error);
             setNewMessage(savedMsg);
-            alert("Message failed to send.");
         }
-    } catch (error) {
-        console.error("Error sending message:", error);
-        setNewMessage(savedMsg);
-    }
-};
+    };
 
     const handleStatusUpdate = async (inquiryId, newStatus) => {
         if (!window.confirm(`Are you sure you want to ${getStatusConfirmationLabel(newStatus)}?`)) return;
@@ -423,15 +415,14 @@ useEffect(() => {
     };
 
     const handleMessageClick = (inquiry) => {
-    setActiveChat(inquiry);
-    setActiveTab('chat');
-    fetchMessages(inquiry._id);
-    
-    // Join the specific room for this inquiry
-    if (socket.current) {
-        socket.current.emit("join_chat", inquiry._id); 
-    }
-};
+        setActiveChat(inquiry);
+        setActiveTab('chat');
+        fetchMessages(inquiry._id);
+        
+        if (socket.current) {
+            socket.current.emit("join_chat", inquiry._id); 
+        }
+    };
 
     const renderChatInterface = () => {
         if (!activeChat) return (
@@ -440,8 +431,6 @@ useEffect(() => {
                 <p>Select an inquiry to start messaging.</p>
             </div>
         );
-
-        // const currentUserId = user?._id || user?.id;
 
         return (
             <div className="chat-interface-container">
@@ -460,33 +449,21 @@ useEffect(() => {
 
                 <div className="chat-messages-area">
                       {chatMessages.map((msg, index) => {
-    // 1. Get sender ID from message (handle object or string)
-    const senderId = msg.senderId?._id || msg.senderId;
-    
-    // 2. Get your ID from AuthContext (using 'id' as defined in your context)
-    const myId = user?.id;
+                        const senderId = msg.senderId?._id || msg.senderId;
+                        const myId = user?.id;
+                        const isSentByMe = senderId && myId && String(senderId) === String(myId) && String(myId) !== "undefined";
 
-    // 3. String comparison + check for "undefined" string
-    const isSentByMe = 
-        senderId && 
-        myId && 
-        String(senderId) === String(myId) && 
-        String(myId) !== "undefined";
-
-    return (
-        <div 
-            key={msg._id || index} 
-            className={`message-wrapper ${isSentByMe ? 'sent' : 'received'}`}
-        >
-            <div className={`message-bubble ${isSentByMe ? 'sent' : 'received'}`}>
-                <p>{msg.text || msg.message}</p>
-                <span className="chat-time">
-                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-            </div>
-        </div>
-    );
-})}
+                    return (
+                        <div key={msg._id || index} className={`message-wrapper ${isSentByMe ? 'sent' : 'received'}`}>
+                            <div className={`message-bubble ${isSentByMe ? 'sent' : 'received'}`}>
+                                <p>{msg.text || msg.message}</p>
+                                <span className="chat-time">
+                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })}
                     <div ref={messagesEndRef} />
                 </div>
 
@@ -505,6 +482,14 @@ useEffect(() => {
         );
     };
 
+    // --- DASHBOARD STATE CALCULATIONS ---
+    const pendingInquiries = inquiries.filter(i => i.status === 'pending');
+    const adoptedCount = myPets.filter(p => p.status === 'adopted').length;
+    
+    const isNewDonor = myPets.length === 0;
+    const isWaitingDonor = myPets.length > 0 && pendingInquiries.length === 0;
+    const isActiveManager = myPets.length > 0 && pendingInquiries.length > 0;
+
     return (
         <div className="dashboard-layout">
             <aside className="sidebar">
@@ -522,12 +507,12 @@ useEffect(() => {
                 
                 <nav className="nav-menu">
                     <button className={activeTab === 'inventory' ? 'active' : ''} onClick={() => setActiveTab('inventory')}>
-                        <Layout size={18} /> My Pets
+                        <Layout size={18} /> Dashboard
                     </button>
                     <button className={activeTab === 'inquiries' ? 'active' : ''} onClick={() => setActiveTab('inquiries')}>
                         <MessageSquare size={18} /> Inquiries 
-                        {inquiries.filter(i => i.status === 'pending').length > 0 && (
-                            <span className="notif-dot">{inquiries.filter(i => i.status === 'pending').length}</span>
+                        {pendingInquiries.length > 0 && (
+                            <span className="notif-dot">{pendingInquiries.length}</span>
                         )}
                     </button>
                     <button className={activeTab === 'chat' ? 'active' : ''} onClick={() => setActiveTab('chat')}>
@@ -545,8 +530,10 @@ useEffect(() => {
                     <>
                     <header className="dashboard-header">
                             <div>
-                                <h1>{activeTab === 'inventory' ? 'Manage Pet Listings' : 'Adoption Inquiries'}</h1>
-                                <p className="subtitle">Track your listings and respond to potential adopters.</p>
+                                <h1>{activeTab === 'inventory' ? 'Command Center' : 'Adoption Inquiries'}</h1>
+                                <p className="subtitle">
+                                    {activeTab === 'inventory' ? 'Overview of your listings and account activity.' : 'Track your listings and respond to potential adopters.'}
+                                </p>
                             </div>
                             <div className="header-actions">
                                 <div className="donor-notification-wrapper">
@@ -608,7 +595,7 @@ useEffect(() => {
                                     )}
                                 </div>
                                 <button className="refresh-btn" onClick={activeTab === 'inventory' ? fetchMyPets : fetchInquiries}>
-                                    <RefreshCcw size={18} color="#5d4037" />
+                                    <RefreshCcw size={18} color="var(--donor-primary)" />
                                 </button>
                                 <button className="add-pet-btn" onClick={() => setIsModalOpen(true)}>
                                     <Plus size={20} /> List a New Pet
@@ -619,36 +606,126 @@ useEffect(() => {
                 )}
 
                 {activeTab === 'inventory' ? (
-                    <div className="pet-grid">
-                        {myPets.map((pet) => (
-                            <div key={pet._id} className="pet-display-card">
-                                <div className="pet-card-image-wrapper">
-                                    {pet.images?.length > 0 ? (
-                                        <img src={`http://localhost:5000/uploads/${pet.images[0]}`} alt={pet.name} />
-                                    ) : ( <div className="placeholder-img"><Camera size={32} /></div> )}
-                                </div>
-                                <div className="pet-card-content">
-                                    <div className="pet-card-title-row">
-                                        <h2 className="pet-card-title">{pet.name}</h2>
-                                        <span className={`pet-status-chip ${pet.status || 'available'}`}>
-                                            {pet.status || 'available'}
-                                        </span>
-                                    </div>
-                                    <p className="pet-card-meta">{pet.age} • {pet.type}</p>
-                                    <div className="pet-card-location"><MapPin size={14} /> <span>{pet.location}</span></div>
-                                    <div className="pet-card-actions">
-                                        <button className="edit-action-btn" onClick={() => handleEditClick(pet)}>Edit</button>
-                                        <button className="delete-action-btn" onClick={() => handleDeletePet(pet._id)}>Delete</button>
-                                    </div>
+                    <div className="dashboard-home-view">
+                        
+                        {/* KPI QUICK STATS ROW */}
+                        <div className="kpi-grid">
+                            <div className="kpi-card">
+                                <div className="kpi-icon"><Activity size={20} /></div>
+                                <div className="kpi-data">
+                                    <h3>{myPets.length}</h3>
+                                    <p>Active Listings</p>
                                 </div>
                             </div>
-                        ))}
+                            <div className="kpi-card">
+                                <div className="kpi-icon alert"><Users size={20} /></div>
+                                <div className="kpi-data">
+                                    <h3>{pendingInquiries.length}</h3>
+                                    <p>Pending Inquiries</p>
+                                </div>
+                            </div>
+                            <div className="kpi-card">
+                                <div className="kpi-icon"><Inbox size={20} /></div>
+                                <div className="kpi-data">
+                                    <h3>{unreadCount}</h3>
+                                    <p>Unread Alerts</p>
+                                </div>
+                            </div>
+                            <div className="kpi-card">
+                                <div className="kpi-icon success"><CheckCircle2 size={20} /></div>
+                                <div className="kpi-data">
+                                    <h3>{adoptedCount}</h3>
+                                    <p>Successfully Adopted</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* STATE DRIVEN WIDGETS */}
+                        {isNewDonor && (
+                            <div className="donor-alert-banner">
+                                <Plus size={24} />
+                                <div>
+                                    <strong>Ready to find a loving home for a pet?</strong>
+                                    <p>Start by creating your first detailed listing to attract potential adopters in your area.</p>
+                                </div>
+                                <button className="donor-banner-btn" onClick={() => setIsModalOpen(true)}>Create Listing</button>
+                            </div>
+                        )}
+
+                        {isWaitingDonor && (
+                            <div className="donor-alert-banner secondary">
+                                <Camera size={24} />
+                                <div>
+                                    <strong>Listing Optimization Tip</strong>
+                                    <p>Your listings are live! Make sure you've uploaded clear, bright photos and detailed personality descriptions to help adopters connect with them.</p>
+                                </div>
+                                <button className="donor-banner-btn outline" onClick={() => setIsModalOpen(true)}>Add Another Pet</button>
+                            </div>
+                        )}
+
+                        {isActiveManager && (
+                            <div className="action-required-widget">
+                                <div className="widget-head">
+                                    <h3>Action Required</h3>
+                                    <span>You have {pendingInquiries.length} application(s) awaiting your review</span>
+                                </div>
+                                <div className="mini-inquiry-list">
+                                    {pendingInquiries.slice(0, 2).map(inq => (
+                                        <div key={inq._id} className="mini-inquiry-item">
+                                            <div className="mini-inquiry-info">
+                                                <div className="avatar-small">{inq.adopterId?.fullName?.[0] || 'A'}</div>
+                                                <div>
+                                                    <strong>{inq.adopterId?.fullName || inq.adopterName}</strong>
+                                                    <p>Inquired about {inq.petId?.name}</p>
+                                                </div>
+                                            </div>
+                                            <button className="review-app-btn" onClick={() => setActiveTab('inquiries')}>Review</button>
+                                        </div>
+                                    ))}
+                                </div>
+                                {pendingInquiries.length > 2 && (
+                                    <button className="view-all-text-btn" onClick={() => setActiveTab('inquiries')}>
+                                        View all {pendingInquiries.length} pending inquiries
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* MY ACTIVE LISTINGS GRID */}
+                        <div className="listings-section-header">
+                            <h2>My Active Listings</h2>
+                        </div>
+                        <div className="pet-grid">
+                            {myPets.map((pet) => (
+                                <div key={pet._id} className="pet-display-card">
+                                    <div className="pet-card-image-wrapper">
+                                        {pet.images?.length > 0 ? (
+                                            <img src={`http://localhost:5000/uploads/${pet.images[0]}`} alt={pet.name} />
+                                        ) : ( <div className="placeholder-img"><Camera size={32} /></div> )}
+                                    </div>
+                                    <div className="pet-card-content">
+                                        <div className="pet-card-title-row">
+                                            <h2 className="pet-card-title">{pet.name}</h2>
+                                            <span className={`pet-status-chip ${pet.status || 'available'}`}>
+                                                {pet.status || 'available'}
+                                            </span>
+                                        </div>
+                                        <p className="pet-card-meta">{pet.age} • {pet.type}</p>
+                                        <div className="pet-card-location"><MapPin size={14} /> <span>{pet.location}</span></div>
+                                        <div className="pet-card-actions">
+                                            <button className="edit-action-btn" onClick={() => handleEditClick(pet)}>Edit</button>
+                                            <button className="delete-action-btn" onClick={() => handleDeletePet(pet._id)}>Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 ) : activeTab === 'inquiries' ? (
                     <div className="inquiry-container">
                         {inquiries.length === 0 ? (
                             <div className="empty-state" style={{ textAlign: 'center', padding: '50px' }}>
-                                <MessageSquare size={48} color="#d7ccc8" style={{ marginBottom: '10px' }} />
+                                <MessageSquare size={48} color="var(--donor-text-soft)" style={{ marginBottom: '10px' }} />
                                 <p>No adoption inquiries yet.</p>
                             </div>
                         ) : (
@@ -697,7 +774,7 @@ useEffect(() => {
                                             <>
                                                 <button className="danger-action-btn" onClick={() => handleStatusUpdate(inq._id, 'declined')}>Decline Adoption</button>
                                                 <button className="success-action-btn" onClick={() => handleStatusUpdate(inq._id, 'finalized')}>Finalize Adoption</button>
-                                                <button className="message-btn" onClick={() => handleMessageClick(inq)} style={{ backgroundColor: '#5d4037', color: 'white', padding: '8px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
+                                                <button className="message-btn" onClick={() => handleMessageClick(inq)}>
                                                     <MessageSquare size={16} /> Message Adopter
                                                 </button>
                                             </>
@@ -714,6 +791,7 @@ useEffect(() => {
                     </div>
                 ) : null}
 
+                {/* MODAL SECTION REMAINS UNCHANGED */}
                 {isModalOpen && (
                     <div className="modal-overlay">
                         <div className="modal-content">

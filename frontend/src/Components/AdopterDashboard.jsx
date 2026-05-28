@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
-import { Search, Bell, Heart, MapPin, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Search, Bell, Heart, MapPin, ChevronLeft, ChevronRight, ShieldCheck, Activity, Clock, CheckCircle2 } from 'lucide-react';
 import './AdopterDashboard.css';
 import AdopterSideBar from './AdopterSideBar';
 
@@ -10,13 +10,13 @@ const AdopterDashboard = () => {
     const { user } = useAuth(); 
     const [pets, setPets] = useState([]);
     const [myInquiries, setMyInquiries] = useState([]); 
+    const [myAdoptedPets, setMyAdoptedPets] = useState([]); // New state for adopted pets
     const scrollRef = useRef(null);
     
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(true);
 
     const [favorites, setFavorites] = useState([]);
-    
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
 
@@ -45,20 +45,28 @@ const AdopterDashboard = () => {
             });
             const petResult = await petResponse.json();
 
-            const [inqResponse, favoritesResponse] = await Promise.all([
+            // Fetch inquiries, favorites, AND adopted pets simultaneously
+            const [inqResponse, favoritesResponse, adoptedResponse] = await Promise.all([
                 fetch(`http://localhost:5000/api/adopter/my-inquiries`, {
                     headers: { 'Authorization': `Bearer ${user.token}` }
                 }),
                 fetch(`http://localhost:5000/api/adopter/favorites`, {
                     headers: { 'Authorization': `Bearer ${user.token}` }
+                }),
+                fetch(`http://localhost:5000/api/pets/my-adoptions`, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
                 })
             ]);
+            
             const inqResult = await inqResponse.json();
             const favoritesResult = await favoritesResponse.json();
+            const adoptedResult = await adoptedResponse.json();
 
             if (petResult.success) setPets(petResult.pets);
             if (inqResult.success) setMyInquiries(inqResult.inquiries);
             if (favoritesResult.success) setFavorites(favoritesResult.favorites || []);
+            if (adoptedResult.success) setMyAdoptedPets(adoptedResult.pets || []);
+
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
         } finally {
@@ -199,6 +207,11 @@ const AdopterDashboard = () => {
         }
     };
 
+    // --- State Checkers ---
+    const isPetParent = myAdoptedPets.length > 0;
+    const isInProcess = myInquiries.length > 0 && !isPetParent;
+    const isExploring = !isPetParent && !isInProcess;
+
     return (
         <div className="adopter-container">
             <AdopterSideBar />
@@ -206,8 +219,14 @@ const AdopterDashboard = () => {
             <main className="adopter-main">
                 <header className="adopter-header">
                     <div className="welcome-section">
-                        <h1>Welcome, <span className="highlight">{adopterName}!</span></h1>
+                        <h1>
+                            Welcome{isPetParent ? ' back' : ''}, <span className="highlight">{adopterName}!</span>
+                        </h1>
+                        {isPetParent && myAdoptedPets[0] && (
+                            <p className="welcome-subtext">How is {myAdoptedPets[0].name} doing today?</p>
+                        )}
                     </div>
+                    
                     <div className="header-controls">
                         <div className="search-bar">
                             <Search size={18} />
@@ -218,7 +237,6 @@ const AdopterDashboard = () => {
                             />
                         </div>
                         
-                        {/* Updated Notification Bell & Wrapper */}
                         <div className="notification-wrapper">
                             <button 
                                 className={`icon-btn ${unreadCount > 0 ? 'has-unread' : ''}`} 
@@ -272,9 +290,82 @@ const AdopterDashboard = () => {
                     </div>
                 </header>
 
-                <section className="listings-section" style={{ position: 'relative' }}>
+                {!loading && !searchTerm && (
+                    <section className="dashboard-widgets">
+                        {/* EXPLORING STATE WIDGET */}
+                        {isExploring && (
+                        <div className="alert-banner exploring-banner">
+                            <Heart size={20} />
+                            <div>
+                                <strong>Ready to find your best friend?</strong>
+                                <p>Start exploring our available pets. When you find the perfect match, you can submit an inquiry to let the donor know why you'd be a great fit!</p>
+                            </div>
+                            <button className="banner-btn" onClick={() => navigate('/explore-pets')}>
+                                Browse Pets
+                            </button>
+                        </div>
+                    )}
+                        {/* IN-PROCESS STATE WIDGET */}
+                        {isInProcess && (
+                            <div className="bento-widget process-widget">
+                                <div className="widget-header">
+                                    <h3>Application Tracker</h3>
+                                    <span className="widget-kicker">You have {myInquiries.length} active application(s)</span>
+                                </div>
+                                <div className="pipeline-tracker">
+                                    <div className="pipeline-step completed">
+                                        <div className="step-icon"><CheckCircle2 size={16} /></div>
+                                        <span>Submitted</span>
+                                    </div>
+                                    <div className="pipeline-line active"></div>
+                                    <div className="pipeline-step active">
+                                        <div className="step-icon"><Clock size={16} /></div>
+                                        <span>Under Review</span>
+                                    </div>
+                                    <div className="pipeline-line"></div>
+                                    <div className="pipeline-step pending">
+                                        <div className="step-icon"></div>
+                                        <span>Final Decision</span>
+                                    </div>
+                                </div>
+                                <button className="widget-action-btn" onClick={() => navigate('/my-applications')}>
+                                    Manage Applications
+                                </button>
+                            </div>
+                        )}
+
+                        {/* ACTIVE PET PARENT STATE WIDGET */}
+                        {isPetParent && (
+                            <div className="bento-widget care-widget">
+                                <div className="widget-header">
+                                    <h3>Care Snapshot</h3>
+                                    <span className="widget-kicker">{myAdoptedPets[0].name}'s Daily Overview</span>
+                                </div>
+                                <div className="care-snapshot-content">
+                                    <div className="care-avatar">
+                                        {myAdoptedPets[0].images?.[0] ? (
+                                            <img src={`http://localhost:5000/uploads/${myAdoptedPets[0].images[0]}`} alt="Pet" />
+                                        ) : (
+                                            <Activity size={24} color="var(--primary-gold)" />
+                                        )}
+                                    </div>
+                                    <div className="care-details">
+                                        <p><strong>Status:</strong> Up to Date</p>
+                                        <p><strong>Next Reminder:</strong> No upcoming tasks</p>
+                                    </div>
+                                </div>
+                                <button className="widget-action-btn" onClick={() => navigate('/pet-care')}>
+                                    Open Pet Care Portal
+                                </button>
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                {/* THE ORIGINAL CAROUSEL (Always visible, pushes down naturally) */}
+                <section className="listings-section" style={{ position: 'relative', marginTop: (!loading && !searchTerm && !isExploring) ? '3rem' : '0' }}>
                     <div className="section-header">
-                        <h2>{searchTerm ? "Search Results" : "Recently Added Pets"}</h2>
+                        <h2>{searchTerm ? "Search Results" : (isPetParent ? "Looking for a sibling?" : "Recently Added Pets")}</h2>
                         <button className="explore-all-btn" onClick={() => navigate('/explore-pets')}>
                             Explore All
                         </button>
