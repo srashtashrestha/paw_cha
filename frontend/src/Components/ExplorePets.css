@@ -84,6 +84,40 @@
     overflow-y: auto;
 }
 
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    padding: 6px 18px 6px 6px;
+    border-radius: var(--pill-radius);
+    border: 1px solid #eee;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: var(--soft-shadow);
+}
+
+.profile-initials {
+    width: 38px;
+    height: 38px;
+    background: #4a332d;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.profile-initials img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
 /* --- FILTER CONTAINER --- */
 .filter-container {
     position: relative; /* Anchors the absolute close button */

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
-import { ChevronLeft, MapPin, Heart, Share2, CheckCircle2, Bell } from 'lucide-react';
+import { ChevronLeft, MapPin, Heart, Share2, CheckCircle2 } from 'lucide-react';
 import './AdopterPetProfile.css';
 import logo from '../Assets/Logo/Logo.png';
 import AdoptionForm from './AdoptionForm';
+import AdopterHeaderActions from './AdopterHeaderActions';
 
 const AdopterPetProfile = () => {
     const { id } = useParams();
@@ -21,9 +22,6 @@ const AdopterPetProfile = () => {
     const [motivation, setMotivation] = useState('');
     const [additionalInfo, setAdditionalInfo] = useState('');
     const [hasApplied, setHasApplied] = useState(false);
-    const [notifications, setNotifications] = useState([]);
-    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
     const adopterName = user?.name || 'User';
     const isReservedForAnotherAdopter =
         pet?.status === 'reserved' &&
@@ -94,65 +92,6 @@ const AdopterPetProfile = () => {
     };
     fetchPetAndStatus();
 }, [id, user?.id, user?.token]);
-
-    useEffect(() => {
-        const fetchNotifications = async () => {
-            if (!user?.token) return;
-
-            try {
-                const response = await fetch(`http://localhost:5000/api/notifications`, {
-                    headers: { 'Authorization': `Bearer ${user.token}` }
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    setNotifications(data.notifications);
-                    const unread = data.notifications.filter((n) => !n.read).length;
-                    setUnreadCount(unread);
-                }
-            } catch (error) {
-                console.error("Error fetching notifications:", error);
-            }
-        };
-
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 15000);
-        return () => clearInterval(interval);
-    }, [user?.token]);
-
-    const toggleNotifDropdown = () => {
-        setShowNotifDropdown((prev) => !prev);
-    };
-
-    const handleMarkAsRead = async (notificationId) => {
-        if (!user?.token) return;
-
-        const targetNotification = notifications.find((notification) => notification._id === notificationId);
-        if (!targetNotification || targetNotification.read) return;
-
-        try {
-            const response = await fetch(`http://localhost:5000/api/notifications/read/${notificationId}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${user.token}`
-                }
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                setNotifications((prev) =>
-                    prev.map((notification) =>
-                        notification._id === notificationId
-                            ? { ...notification, read: true }
-                            : notification
-                    )
-                );
-                setUnreadCount((prev) => Math.max(0, prev - 1));
-            }
-        } catch (error) {
-            console.error("Failed to mark notification as read", error);
-        }
-    };
 
     const toggleFavorite = async () => {
         if (!user?.token || !pet?._id) return;
@@ -265,55 +204,7 @@ const AdopterPetProfile = () => {
             <header className="profile-top-nav">
                 <img src={logo} alt="PawCha" className="nav-logo" onClick={() => navigate('/adopter-dashboard')} />
                 <div className="nav-actions">
-                    <div className="notification-wrapper">
-                        <button
-                            className={`nav-icon-btn ${unreadCount > 0 ? 'has-unread' : ''}`}
-                            onClick={toggleNotifDropdown}
-                        >
-                            <Bell size={20} />
-                            {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
-                        </button>
-
-                        {showNotifDropdown && (
-                            <div className="notif-dropdown">
-                                <div className="notif-header">
-                                    <h4>Notifications</h4>
-                                    {unreadCount > 0 && <span className="unread-dot"></span>}
-                                </div>
-                                {notifications.length > 0 ? (
-                                    notifications.map((n) => (
-                                        <div key={n._id} className={`notif-item ${n.read ? 'read' : 'unread'}`}>
-                                            <p>{n.message}</p>
-                                            <div className="notif-actions">
-                                                <div className="notif-action-buttons">
-                                                    {n.type === 'approval' && (
-                                                        <button className="chat-now-btn" onClick={() => navigate('/messages')}>
-                                                            Chat Now
-                                                        </button>
-                                                    )}
-                                                    {!n.read && (
-                                                        <button className="mark-read-btn" onClick={() => handleMarkAsRead(n._id)}>
-                                                            Mark as read
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <span className="notif-time">{new Date(n.createdAt).toLocaleDateString()}</span>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="empty-notif">
-                                        <Bell size={30} opacity={0.3} />
-                                        <p>No new updates</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                    <div className="nav-user-profile">
-                        <div className="avatar-circle">{adopterName.charAt(0)}</div>
-                        <span>{adopterName}</span>
-                    </div>
+                    <AdopterHeaderActions />
                 </div>
             </header>
 

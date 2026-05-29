@@ -51,7 +51,8 @@ const LoginForm = () => {
           role: data.role,
           name: data.fullName,
           email: data.email,
-          id: data.id
+          id: data.id,
+          profilePic: data.profilePic
         });
 
         alert(`Welcome back, ${data.fullName}!`); 

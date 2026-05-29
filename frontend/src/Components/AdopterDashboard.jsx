@@ -26,6 +26,10 @@ const AdopterDashboard = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     
     const adopterName = user?.role === 'adopter' ? user.name : 'User';
+    const profilePicFile = Array.isArray(user?.profilePic)
+        ? user.profilePic.find(Boolean)
+        : user?.profilePic;
+    const profilePicSrc = profilePicFile ? `http://localhost:5000/uploads/${profilePicFile}` : null;
 
     const handleScroll = () => {
         if (scrollRef.current) {
@@ -284,7 +288,13 @@ const AdopterDashboard = () => {
                         </div>
 
                         <div className="user-profile">
-                            <div className="profile-initials">{adopterName.charAt(0)}</div>
+                            <div className="profile-initials">
+                                {profilePicSrc ? (
+                                    <img src={profilePicSrc} alt={adopterName} />
+                                ) : (
+                                    adopterName.charAt(0)
+                                )}
+                            </div>
                             <span>{adopterName}</span>
                         </div>
                     </div>
@@ -350,7 +360,7 @@ const AdopterDashboard = () => {
                                         )}
                                     </div>
                                     <div className="care-details">
-                                        <p><strong>Status:</strong> Up to Date</p>
+                                        <p><strong>Vaccination Status:</strong> Up to Date</p>
                                         <p><strong>Next Reminder:</strong> No upcoming tasks</p>
                                     </div>
                                 </div>

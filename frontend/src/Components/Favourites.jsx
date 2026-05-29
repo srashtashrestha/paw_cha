@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Heart, Bell, ShieldCheck } from 'lucide-react';
+import { MapPin, Heart, ShieldCheck } from 'lucide-react';
 import AdopterSideBar from './AdopterSideBar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AdopterHeaderActions from './AdopterHeaderActions';
 import './AdopterDashboard.css'; 
 
 const Favourites = () => {
@@ -42,8 +43,6 @@ const Favourites = () => {
         fetchPets();
     }, [user?.token]);
 
-const adopterName = user?.name || 'User';
-
     // Filter pets that are in the favorites array
     const favPets = allPets.filter(pet => favorites.includes(pet._id));
 
@@ -53,11 +52,7 @@ const adopterName = user?.name || 'User';
             <main className="adopter-main">
                 <header className="adopter-header">
                     <h1>My <span className="highlight">Favourites</span></h1>
-                     <button className="icon-btn"><Bell size={20} /></button>
-                        <div className="user-profile">
-                            <div className="profile-initials">{adopterName.charAt(0)}</div>
-                            <span>{adopterName}</span>
-                        </div>
+                    <AdopterHeaderActions />
                 </header>
 
                 <div className="pets-scroll-grid">

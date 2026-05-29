@@ -676,6 +676,15 @@
     font-size: 1.15rem;
     border: 1px solid var(--donor-border-strong);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    overflow: hidden;
+}
+
+.mini-avatar img,
+.avatar-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .adopter-profile h3 {
@@ -1676,6 +1685,7 @@
   align-items: center; 
   justify-content: center; 
   font-weight: 700; 
+  overflow: hidden;
 }
 
 .mini-inquiry-info strong { 
@@ -1731,4 +1741,113 @@
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
   color: var(--donor-text);
+}
+
+/* --- INQUIRY UX UPGRADES --- */
+
+/* Filter Tabs Row */
+.inquiry-filter-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.inquiry-filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.inquiry-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--donor-surface);
+  border: 1px solid var(--donor-border);
+  padding: 10px 20px;
+  border-radius: 50px;
+  color: var(--donor-text-soft);
+  font-weight: 600;
+  font-family: 'Outfit';
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--donor-transition);
+  white-space: nowrap;
+}
+
+.inquiry-filter-btn:hover {
+  background: var(--donor-surface-muted);
+  color: var(--donor-text);
+  border-color: var(--donor-border-strong);
+}
+
+.inquiry-filter-btn.active {
+  background: var(--donor-primary);
+  color: white;
+  border-color: var(--donor-primary);
+  box-shadow: 0 4px 12px rgba(93, 64, 55, 0.2);
+}
+
+.filter-badge {
+  background: #ff7043;
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 50px;
+}
+
+/* Pet Thumbnail inside inquiry card */
+.interested-pet-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  background: var(--donor-surface-muted);
+  padding: 4px 12px 4px 4px;
+  border-radius: 50px;
+  border: 1px solid var(--donor-border);
+}
+
+.pet-mini-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--donor-primary);
+}
+
+.pet-mini-thumb.fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.interested-pet-tag strong {
+  font-size: 0.95rem;
+}
+
+/* Anchored Finalized Banners */
+.finalized-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--donor-radius-sm);
+  font-weight: 700;
+  font-size: 0.95rem;
+  width: 100%;
+}
+
+.finalized-banner.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid rgba(46, 125, 50, 0.2);
+}
+
+.finalized-banner.danger {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid rgba(198, 40, 40, 0.2);
 }

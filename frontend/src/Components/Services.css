@@ -1,0 +1,307 @@
+/* Inherits global variables and resets from LandingPage.css */
+
+.services-page {
+    background-color: #FDFAEF; /* Matches your landing page background */
+}
+
+/* --- 1. HERO BANNER --- */
+.services-hero-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    /* INSTRUCTION: Link to your high-quality hand/paw hero image here */
+    background-image: url('C:\herald\fyp\PetAdoptionPortal\frontend\src\Assets\Photos\Services.png'); 
+    background-size: cover;
+    background-position: center;
+    height: 400px;
+    position: relative;
+}
+
+.services-hero-inner {
+    width: 1440px;
+    max-width: 100%;
+    padding: 0 120px; /* Matches LandingPage padding */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.services-hero-glass-box {
+    background: rgba(253, 250, 239, 0.9); /* #FDFAEF with opacity */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 32px 56px;
+    border-radius: 24px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.05);
+    max-width: 650px;
+}
+
+.services-hero-glass-box h1 {
+    font-size: 48px; /* Matches hero-title */
+    font-weight: 700;
+    color: #4A3C2A;
+    margin: 0 0 8px 0;
+    line-height: 120%;
+}
+
+.services-hero-glass-box p {
+    color: #6D5D4B; /* Matches hero-subtitle */
+    font-size: 16px;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* --- MAIN CONTENT WRAPPER --- */
+.services-main-content {
+    width: 1440px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 120px 80px 120px; /* Matches LandingPage horizontal padding */
+}
+
+/* --- 2. SERVICES GRID --- */
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    margin-top: -40px; /* Pulls grid up slightly over the hero image */
+    position: relative;
+    z-index: 10;
+    margin-bottom: 80px;
+}
+
+.service-bento-card {
+    background: #FFFFFF;
+    border-radius: 24px; /* Matches your pet-card radius */
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E6E2D3; /* Matches pet-card border */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.service-bento-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+
+.service-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    background: #FFFBF0;
+    border: 1.5px solid #F0CF65;
+    color: #F0CF65;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+}
+
+.service-bento-card:hover .service-icon-wrapper {
+    background: #F0CF65;
+    color: #ffffff;
+}
+
+.service-bento-card h3 {
+    font-size: 24px;
+    color: #1B1B1B;
+    margin: 0 0 12px 0;
+    font-weight: 700;
+}
+
+.service-bento-card p {
+    color: #6D5D4B;
+    line-height: 1.6;
+    margin: 0;
+    font-size: 16px;
+}
+
+/* --- 3. TRUST & SAFETY --- */
+.trust-safety-banner {
+    background: #FFFFFF;
+    border-radius: 32px;
+    padding: 48px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E6E2D3;
+    margin-bottom: 80px;
+}
+
+.trust-header {
+    margin-bottom: 40px;
+}
+
+.trust-header h2 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1B1B1B;
+    margin: 0 0 8px 0;
+}
+
+.trust-header p {
+    color: #6D5D4B;
+    font-size: 16px;
+    margin: 0;
+}
+
+.trust-items-row {
+    display: flex;
+    justify-content: center;
+    gap: 56px;
+    flex-wrap: wrap;
+}
+
+.trust-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 180px;
+}
+
+.trust-icon-circle {
+    width: 56px;
+    height: 56px;
+    background: #FFFBF0;
+    border: 1.5px solid #F0CF65;
+    color: #F0CF65;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trust-item span {
+    color: #1B1B1B;
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+/* --- 4. CTA SECTION --- */
+.services-cta-section {
+    width: 100%;
+    border-radius: 48px;
+    /* INSTRUCTION: Link to your exported Abstract SVG background here */
+    background-image: url('C:\herald\fyp\PetAdoptionPortal\frontend\src\Assets\Photos\Banner.svg'); 
+    background-color: #E5E0FC; /* Solid fallback matching the purple tint */
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 64px 80px;
+    position: relative;
+    overflow: visible; 
+}
+
+.cta-text-content {
+    position: relative;
+    z-index: 2;
+    max-width: 500px;
+}
+
+.cta-text-content h2 {
+    font-size: 40px;
+    font-weight: 700;
+    color: #1B1B1B;
+    margin: 0 0 32px 0;
+    line-height: 120%;
+}
+
+.cta-button-group {
+    display: flex;
+    gap: 16px;
+}
+
+/* Note: .btn-primary and .btn-secondary are inherited natively from LandingPage.css! */
+/* We just need to force the secondary button to have a white background over the purple abstract */
+.services-cta-section .btn-secondary {
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(4px);
+}
+.services-cta-section .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.cta-pets-wrapper {
+    position: absolute;
+    bottom: 0;
+    right: 5%;
+    height: 125%; 
+    display: flex;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+.cta-pets-wrapper img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+    transform: translateY(2px); /* Adjust based on your specific image cut */
+}
+
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 1200px) {
+    .services-hero-inner,
+    .services-main-content {
+        padding-left: 60px;
+        padding-right: 60px;
+    }
+}
+
+@media (max-width: 900px) {
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .services-cta-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 48px 40px 0; 
+        overflow: hidden;
+    }
+
+    .cta-text-content {
+        margin-bottom: 32px;
+    }
+
+    .cta-button-group {
+        justify-content: center;
+    }
+
+    .cta-pets-wrapper {
+        position: relative;
+        right: auto;
+        height: 280px;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 640px) {
+    .services-hero-inner,
+    .services-main-content {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
+    .services-hero-glass-box h1 {
+        font-size: 32px;
+    }
+    
+    .cta-text-content h2 {
+        font-size: 32px;
+    }
+
+    .cta-button-group {
+        flex-direction: column;
+    }
+
+    .trust-items-row {
+        gap: 32px;
+    }
+}

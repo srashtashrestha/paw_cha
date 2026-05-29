@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
 import './MyApplications.css';
 import AdopterSideBar from './AdopterSideBar'; 
+import AdopterHeaderActions from './AdopterHeaderActions';
 
 const MyApplications = () => {
     const { user } = useAuth();
@@ -32,11 +33,14 @@ const MyApplications = () => {
             
             {/* 3. Wrapped content in adopter-main to provide proper margins */}
             <main className="adopter-main">
+                <header className="adopter-header">
+                    <div className="welcome-section">
+                        <h1>My <span className="highlight">Applications</span></h1>
+                    </div>
+                    <AdopterHeaderActions />
+                </header>
+
                 <div className="applications-container">
-                    <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '2rem' }}>
-                        My Adoption Applications
-                    </h2>
-                    
                     <div className="apps-bento-grid">
                         {applications.map(app => (
                             <div key={app._id} className="app-card bento-card">

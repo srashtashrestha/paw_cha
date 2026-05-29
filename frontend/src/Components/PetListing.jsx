@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { MapPin, Heart, Search, ShieldCheck } from 'lucide-react';
+import { MapPin, Search, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from './NavBar';
 import Footer from './Footer';
@@ -7,19 +7,11 @@ import './PetListing.css';
 
 const PetListing = () => {
     const navigate = useNavigate();
-    const [favorites, setFavorites] = useState({});
     const [pets, setPets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [typeFilter, setTypeFilter] = useState('All Types');
     const [locationFilter, setLocationFilter] = useState('Anywhere');
     const [ageFilter, setAgeFilter] = useState('All ages');
-
-    const toggleWishlist = (id) => {
-        setFavorites((prev) => ({
-            ...prev,
-            [id]: !prev[id]
-        }));
-    };
 
     useEffect(() => {
         const fetchPets = async () => {
@@ -125,17 +117,6 @@ const PetListing = () => {
                             filteredPets.map((pet) => (
                                 <div key={pet._id} className="pet-card">
                                     <div className="pet-card-image">
-                                        <button
-                                            className={`wishlist-btn ${favorites[pet._id] ? 'active' : ''}`}
-                                            onClick={() => toggleWishlist(pet._id)}
-                                            type="button"
-                                        >
-                                            <Heart
-                                                size={20}
-                                                color="#7F65F0"
-                                                fill={favorites[pet._id] ? "#7F65F0" : "none"}
-                                            />
-                                        </button>
                                         {pet.images?.[0] ? (
                                             <img
                                                 src={`http://localhost:5000/uploads/${pet.images[0]}`}

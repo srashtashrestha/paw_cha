@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import AdopterSideBar from './AdopterSideBar';
+import AdopterHeaderActions from './AdopterHeaderActions';
 import { User, Shield, Camera, Lock, Mail, UserCircle, CheckCircle, AlertCircle } from 'lucide-react';
 import './Settings.css';
 
@@ -38,6 +39,16 @@ const Settings = () => {
     const showToast = (text, type) => {
         setMessage({ text, type });
         setTimeout(() => setMessage({ text: '', type: '' }), 4000);
+    };
+
+    const getProfilePicSrc = () => {
+        const savedProfilePic = Array.isArray(user?.profilePic)
+            ? user.profilePic[0]
+            : user?.profilePic;
+
+        return savedProfilePic
+            ? `http://localhost:5000/uploads/${savedProfilePic}`
+            : `https://ui-avatars.com/api/?name=${profile.name || 'User'}&background=random`;
     };
 
     // --- Profile Picture Upload Logic ---
@@ -175,6 +186,7 @@ const Settings = () => {
                     <div className="welcome-section">
                         <h1>Account <span className="highlight">Settings</span></h1>
                     </div>
+                    <AdopterHeaderActions />
                 </header>
 
                 <div className="settings-scroll-container">
@@ -190,7 +202,7 @@ const Settings = () => {
                             <div className="pfp-edit-section">
                                 <div className="pfp-wrapper">
                                     <img 
-                                        src={user?.profilePic ? `http://localhost:5000/uploads/${user.profilePic}` : `https://ui-avatars.com/api/?name=${profile.name || 'User'}&background=random`} 
+                                        src={getProfilePicSrc()} 
                                         alt="Profile" 
                                         className="pfp-preview" 
                                         onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${profile.name || 'User'}`; }}

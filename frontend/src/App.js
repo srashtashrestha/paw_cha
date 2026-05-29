@@ -19,6 +19,8 @@ import Settings from './Components/Settings';
 import ExplorePets from './Components/ExplorePets';
 import Messages from './Components/Messages';
 import PetCare from './Components/PetCare';
+import Services from './Components/Services';
+import ContactUs from './Components/ContactUs';
 
 const router = createBrowserRouter([
   {
@@ -104,6 +106,14 @@ const router = createBrowserRouter([
   {
     path: "/pet-care",
     element: <PetCare/>
+  },
+  {
+    path: "/services",
+    element: <Services/>
+  },
+  {
+    path: "/contact-us",
+    element: <ContactUs/>
   }
 ]);
 

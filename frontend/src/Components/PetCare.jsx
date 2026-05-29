@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import AdopterSideBar from './AdopterSideBar';
 import {
     AlertTriangle,
@@ -12,13 +11,13 @@ import {
     Plus,
     ShieldCheck,
     User,
-    Bell,
     Edit2,
     Trash2,
     Activity,
     Stethoscope,
     Utensils
 } from 'lucide-react';
+import AdopterHeaderActions from './AdopterHeaderActions';
 import './PetCare.css';
 
 const STATUS_META = {
@@ -78,41 +77,17 @@ const formatDisplayDate = (value) => {
 };
 
 const PetCare = () => {
-    const navigate = useNavigate();
     const { user } = useAuth();
     const [pets, setPets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedPetId, setSelectedPetId] = useState(null);
     const [activeTab, setActiveTab] = useState('vaccines'); // New Tab State
-    const [notifications, setNotifications] = useState([]);
-    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
     const [formData, setFormData] = useState({
         vaccineName: '',
         date: ''
     });
     const [submitting, setSubmitting] = useState(false);
     const [feedback, setFeedback] = useState('');
-
-    const fetchNotifications = useCallback(async () => {
-        if (!user?.token) return;
-
-        try {
-            const response = await fetch('http://localhost:5000/api/notifications', {
-                headers: {
-                    Authorization: `Bearer ${user.token}`
-                }
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                setNotifications(data.notifications || []);
-                setUnreadCount((data.notifications || []).filter((notification) => !notification.read).length);
-            }
-        } catch (error) {
-            console.error('Error fetching notifications:', error);
-        }
-    }, [user?.token]);
 
     useEffect(() => {
         const fetchAdoptedPets = async () => {
@@ -176,75 +151,6 @@ const PetCare = () => {
         }
     }, [carePets, selectedPetId]);
 
-    useEffect(() => {
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 15000);
-        return () => clearInterval(interval);
-    }, [fetchNotifications]);
-
-    useEffect(() => {
-        const refreshNotifications = () => {
-            if (document.visibilityState === 'hidden') return;
-            fetchNotifications();
-        };
-
-        window.addEventListener('focus', refreshNotifications);
-        document.addEventListener('visibilitychange', refreshNotifications);
-
-        return () => {
-            window.removeEventListener('focus', refreshNotifications);
-            document.removeEventListener('visibilitychange', refreshNotifications);
-        };
-    }, [fetchNotifications]);
-
-    const toggleNotifDropdown = () => {
-        const nextState = !showNotifDropdown;
-        setShowNotifDropdown(nextState);
-
-        if (nextState) {
-            fetchNotifications();
-        }
-    };
-
-    const handleMarkAsRead = async (notificationId) => {
-        if (!user?.token) return;
-
-        const targetNotification = notifications.find((notification) => notification._id === notificationId);
-        if (!targetNotification || targetNotification.read) return;
-
-        try {
-            const response = await fetch(`http://localhost:5000/api/notifications/read/${notificationId}`, {
-                method: 'PUT',
-                headers: {
-                    Authorization: `Bearer ${user.token}`
-                }
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                setNotifications((prev) =>
-                    prev.map((notification) =>
-                        notification._id === notificationId
-                            ? { ...notification, read: true }
-                            : notification
-                    )
-                );
-                setUnreadCount((prev) => Math.max(0, prev - 1));
-            }
-        } catch (error) {
-            console.error('Failed to mark notification as read', error);
-        }
-    };
-
-    const handleNotificationAction = async (notification) => {
-        if (!notification?.read) {
-            await handleMarkAsRead(notification._id);
-        }
-
-        setShowNotifDropdown(false);
-        navigate('/messages');
-    };
-
     const handleVaccinationSubmit = async (event) => {
         event.preventDefault();
         if (!selectedPet || !user?.token) return;
@@ -297,74 +203,7 @@ const PetCare = () => {
                     </div>
 
                     <div className="petcare-header-actions">
-                        <div className="notification-wrapper">
-                            <button
-                                type="button"
-                                className={`icon-btn ${unreadCount > 0 ? 'has-unread' : ''}`}
-                                onClick={toggleNotifDropdown}
-                            >
-                                <Bell size={22} />
-                                {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
-                            </button>
-
-                            {showNotifDropdown && (
-                                <div className="notif-dropdown">
-                                    <div className="notif-header">
-                                        <h4>Notifications</h4>
-                                        {unreadCount > 0 && <span className="unread-dot"></span>}
-                                    </div>
-                                    {notifications.length > 0 ? (
-                                        notifications.map((notification) => (
-                                            <div
-                                                key={notification._id}
-                                                className={`notif-item ${notification.read ? 'read' : 'unread'}`}
-                                            >
-                                                <p>{notification.message}</p>
-                                                <div className="notif-actions">
-                                                    <div className="notif-action-buttons">
-                                                        {notification.type === 'approval' && (
-                                                            <button
-                                                                type="button"
-                                                                className="chat-now-btn"
-                                                                onClick={() => handleNotificationAction(notification)}
-                                                            >
-                                                                Chat Now
-                                                            </button>
-                                                        )}
-                                                        {!notification.read && (
-                                                            <button
-                                                                type="button"
-                                                                className="mark-read-btn"
-                                                                onClick={() => handleMarkAsRead(notification._id)}
-                                                            >
-                                                                Mark as read
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <span className="notif-time">
-                                                        {new Date(notification.createdAt).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="empty-notif">
-                                            <Bell size={30} opacity={0.3} />
-                                            <p>No new updates</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        <div className="petcare-profile-pill">
-                            <div className="petcare-profile-avatar">
-                                {(user?.name || user?.fullName || 'U').charAt(0)}
-                            </div>
-                            <div>
-                                <span className="petcare-profile-label">Care Profile</span>
-                                <strong>{user?.name || user?.fullName || 'Adopter'}</strong>
-                            </div>
-                        </div>
+                        <AdopterHeaderActions />
                     </div>
                 </header>
 

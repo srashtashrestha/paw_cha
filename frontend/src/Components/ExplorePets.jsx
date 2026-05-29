@@ -28,6 +28,10 @@ const ExplorePets = () => {
     });
 
     const adopterName = user?.fullName || user?.name || 'User';
+    const profilePicFile = Array.isArray(user?.profilePic)
+        ? user.profilePic.find(Boolean)
+        : user?.profilePic;
+    const profilePicSrc = profilePicFile ? `http://localhost:5000/uploads/${profilePicFile}` : null;
 
     const normalizeText = (value) =>
         String(value || "")
@@ -346,7 +350,13 @@ const ExplorePets = () => {
                         </div>
                         
                         <div className="user-profile">
-                            <div className="profile-initials">{adopterName.charAt(0)}</div>
+                            <div className="profile-initials">
+                                {profilePicSrc ? (
+                                    <img src={profilePicSrc} alt={adopterName} />
+                                ) : (
+                                    adopterName.charAt(0)
+                                )}
+                            </div>
                             <span>{adopterName}</span>
                         </div>
                     </div>

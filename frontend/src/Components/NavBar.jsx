@@ -30,7 +30,6 @@ const NavBar = () => {
     return (
         <nav className="pawcha-navbar">
             <div className="nav-left">
-                {/* Fixed: Added handleHomeClick to ensure smooth behavior if already on home */}
                 <Link 
                     to="/home" 
                     onClick={handleHomeClick}
@@ -53,7 +52,7 @@ const NavBar = () => {
             </div>
 
             <div className="nav-right">
-                <span className="nav-item contact-us">Contact Us</span>
+                <Link to="/contact-us" className={`nav-item ${isActive('/contact-us') ? 'active' : ''}`}>Contact Us</Link>
                 <div className="nav-auth-btns">
                     <button className="nav-btn login" onClick={() => navigate('/login')}>Login</button>
                     <button className="nav-btn register" onClick={() => navigate('/register-adopter')}>Register</button>

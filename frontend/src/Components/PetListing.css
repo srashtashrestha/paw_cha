@@ -152,49 +152,6 @@
     background: linear-gradient(180deg, #F4EBDD 0%, #E6E2D3 100%);
 }
 
-.wishlist-btn {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: white;
-    border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-/* --- WISHLIST BUTTON INTERACTION --- */
-.wishlist-btn {
-    /* ... keep your existing properties ... */
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 10;
-}
-
-/* Hover Effect: button grows slightly and adds a subtle purple tint */
-.wishlist-btn:hover {
-    transform: scale(1.1);
-    background-color: #F2EFFD; /* Light purple tint from hero */
-}
-
-/* Active/Click Effect: button "pops" down when pressed */
-.wishlist-btn:active {
-    transform: scale(0.9);
-}
-
-/* Active State: subtle shadow change when favorited */
-.wishlist-btn.active {
-    box-shadow: 0 4px 12px rgba(127, 101, 240, 0.3);
-}
-
-/* Ensure the Lucide icon inside transitions smoothly */
-.wishlist-btn svg {
-    transition: fill 0.2s ease, transform 0.2s ease;
-}
-
 .pet-card-details {
     padding: 20px;
 }

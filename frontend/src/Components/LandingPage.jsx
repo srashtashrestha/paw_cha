@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
-import { ChevronRight, ChevronLeft, MapPin, Heart } from 'lucide-react'; 
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronRight, ChevronLeft, MapPin, ShieldCheck } from 'lucide-react'; 
 import NavBar from './NavBar';
 import Footer from './Footer';
 import './LandingPage.css'; 
@@ -11,8 +12,11 @@ import community from '../Assets/Photos/communitywithblob.svg';
 import adoption from '../Assets/Photos/adoptonwithblob.svg';
 
 const LandingPage = () => {
+    const navigate = useNavigate();
     const scrollRef = useRef(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
+    const [pets, setPets] = useState([]);
+    const [petsLoading, setPetsLoading] = useState(true);
 
     const handleScroll = () => {
         if (scrollRef.current) {
@@ -27,13 +31,38 @@ const LandingPage = () => {
         }
     };
 
-    const pets = [
-        { id: 1, name: "Milo", age: "5 years old", location: "Lalitpur, Nepal", img: "" },
-        { id: 2, name: "Milo", age: "5 years old", location: "Lalitpur, Nepal", img: "" },
-        { id: 3, name: "Milo", age: "5 years old", location: "Lalitpur, Nepal", img: "" },
-        { id: 4, name: "Kanchi", age: "3 years old", location: "Lalitpur, Nepal", img: "" },
-        { id: 5, name: "Buddy", age: "2 years old", location: "Kathmandu, Nepal", img: "" },
-    ];
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const fetchAvailablePets = async () => {
+            try {
+                const response = await fetch("http://localhost:5000/api/pets", {
+                    signal: controller.signal
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch available pets");
+                }
+
+                const data = await response.json();
+                const availablePets = Array.isArray(data) ? data : data.pets;
+                setPets(Array.isArray(availablePets) ? availablePets : []);
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    console.error("Landing page pets fetch failed:", error);
+                    setPets([]);
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setPetsLoading(false);
+                }
+            }
+        };
+
+        fetchAvailablePets();
+
+        return () => controller.abort();
+    }, []);
 
     return (
         <div className="landing-wrapper">
@@ -70,7 +99,7 @@ const LandingPage = () => {
                     <div className="pet-listing-inner">
                         <div className="pet-listing-header">
                             <h2 className="listing-title">Meet Pets <span className="highlight-purple">Ready</span> for Adoption</h2>
-                            <div className="view-more-simple">
+                            <div className="view-more-simple" onClick={() => navigate('/pet-listing')}>
                                 View more <ChevronRight size={20} />
                             </div>
                         </div>
@@ -82,23 +111,46 @@ const LandingPage = () => {
                                 </button>
                             )}
                             <div className="pet-cards-container" ref={scrollRef} onScroll={handleScroll}>
-                                {pets.map((pet) => (
-                                    <div className="pet-card" key={pet.id}>
+                                {petsLoading ? (
+                                    <div className="landing-listing-status-msg">Loading pets...</div>
+                                ) : pets.length === 0 ? (
+                                    <div className="landing-listing-status-msg">No pets available right now.</div>
+                                ) : pets.map((pet) => (
+                                    <div className="pet-card" key={pet._id}>
                                         <div className="pet-card-image">
-                                            {pet.img ? <img src={pet.img} alt={pet.name} /> : <div className="empty-img-slot">Image Space</div>}
+                                            {pet.images?.[0] ? (
+                                                <img
+                                                    src={`http://localhost:5000/uploads/${pet.images[0]}`}
+                                                    alt={pet.name}
+                                                    className="pet-card-photo"
+                                                />
+                                            ) : (
+                                                <div className="empty-img-slot">Pet Photo</div>
+                                            )}
                                         </div>
                                         <div className="pet-card-details">
                                             <div className="pet-name-title">
-                                                <Heart size={22} fill="#8B5CF6" stroke="none" className="heart-icon" />
                                                 <h3>{pet.name}</h3>
+                                                {pet.isClinicallyApproved && (
+                                                    <span className="pet-clinical-badge">
+                                                        <ShieldCheck size={14} />
+                                                        Clinically Approved
+                                                    </span>
+                                                )}
                                             </div>
-                                            <p className="pet-meta age-text">{pet.age}</p>
-                                            <p className="pet-meta status-text">Looking for Love</p>
+                                            <p className="pet-meta">
+                                                {pet.age || "Age N/A"} &bull; {pet.type || "Pet"} &bull; {pet.breed || "Mixed"}
+                                            </p>
                                             <div className="pet-location-tag">
-                                                <MapPin size={18} />
-                                                <span>{pet.location}</span>
+                                                <MapPin size={14} /> {pet.location || "Location not specified"}
                                             </div>
-                                            <button className="view-profile-btn-brown">View Profile</button>
+                                            <button
+                                                className="view-profile-btn-brown"
+                                                type="button"
+                                                onClick={() => navigate(`/pet-profile/${pet._id}`)}
+                                            >
+                                                View Profile
+                                            </button>
                                         </div>
                                     </div>
                                 ))}

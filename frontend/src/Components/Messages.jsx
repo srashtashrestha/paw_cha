@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import io from 'socket.io-client';
 import { MessageSquare, Send } from 'lucide-react';
 import axios from 'axios';
+import AdopterSideBar from './AdopterSideBar';
+import AdopterHeaderActions from './AdopterHeaderActions';
 import './Messages.css';
 
 // Fix 1: Using a single socket instance connection
@@ -29,7 +31,7 @@ const Messages = () => {
             }
         };
         if (user?.token) fetchInquiries();
-    }, [user.token]);
+    }, [user?.token]);
 
     // Fetch messages when a chat is selected
     useEffect(() => {
@@ -48,7 +50,7 @@ const Messages = () => {
         } else {
             setMessages([]);
         }
-    }, [selectedChat, user.token]);
+    }, [selectedChat, user?.token]);
 
     useEffect(() => {
         if (!selectedChat?._id) return;
@@ -119,79 +121,92 @@ const Messages = () => {
     };
 
     return (
-        <div className="messages-page-container">
-            <div className="chat-sidebar">
-                <h3 className="sidebar-title">Conversations</h3>
-                <div className="inquiry-scroll-list">
-                    {inquiries.map(inq => (
-                        <div
-                            key={inq._id}
-                            className={`inquiry-card ${selectedChat?._id === inq._id ? 'active-chat' : ''}`}
-                            onClick={() => handleSelectChat(inq)}
-                        >
-                            <img src={`http://localhost:5000/uploads/${inq.petId.images[0]}`} alt="pet" className="chat-pet-img" />
-                            <div className="inquiry-details">
-                                <h4>{inq.petId.name}</h4>
-                                <p>Status: <span className={`status-tag ${inq.status}`}>{inq.status}</span></p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+        <div className="adopter-container">
+            <AdopterSideBar />
 
-            <div className="chat-main-window">
-                {selectedChat ? (
-                    <>
-                        <div className="chat-header">
-                            <img src={`http://localhost:5000/uploads/${selectedChat.petId.images[0]}`} alt="avatar" />
-                            <div>
-                                <h4>Chatting about {selectedChat.petId.name}</h4>
-                                <p>Donor: {selectedChat.donorId.fullName}</p>
-                            </div>
-                        </div>
+            <main className="adopter-main messages-adopter-main">
+                <header className="adopter-header">
+                    <div className="welcome-section">
+                        <h1>Adoption <span className="highlight">Messages</span></h1>
+                    </div>
+                    <AdopterHeaderActions />
+                </header>
 
-                        <div className="chat-messages-area">
-                            {messages.map((m, i) => {
-                                // Fix 3: Standardize IDs as strings for reliable comparison
-                                const senderId = String(m.senderId?._id || m.senderId);
-                                const myId = String(user?._id || user?.id);
-                                const isMe = senderId === myId;
-
-                                return (
-                                    <div key={m._id || i} className={`msg-wrapper ${isMe ? 'me' : 'them'}`}>
-                                        <div className="msg-bubble">
-                                            {m.text || "No message content"}
-                                        </div>
-                                        <span className="msg-time">
-                                            {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...'}
-                                        </span>
+                <div className="messages-page-container">
+                    <div className="chat-sidebar">
+                        <h3 className="sidebar-title">Conversations</h3>
+                        <div className="inquiry-scroll-list">
+                            {inquiries.map(inq => (
+                                <div
+                                    key={inq._id}
+                                    className={`inquiry-card ${selectedChat?._id === inq._id ? 'active-chat' : ''}`}
+                                    onClick={() => handleSelectChat(inq)}
+                                >
+                                    <img src={`http://localhost:5000/uploads/${inq.petId.images[0]}`} alt="pet" className="chat-pet-img" />
+                                    <div className="inquiry-details">
+                                        <h4>{inq.petId.name}</h4>
+                                        <p>Status: <span className={`status-tag ${inq.status}`}>{inq.status}</span></p>
                                     </div>
-                                );
-                            })}
-                            <div ref={scrollRef} />
-                        </div>
-
-                        <form className="chat-input-bar" onSubmit={handleSend}>
-                            <input
-                                type="text"
-                                placeholder="Write a message..."
-                                value={text}
-                                onChange={(e) => setText(e.target.value)}
-                            />
-                            <button type="submit" className="send-button">
-                                <Send size={20} />
-                            </button>
-                        </form>
-                    </>
-                ) : (
-                    <div className="empty-state">
-                        <div className="empty-state-content" style={{ textAlign: 'center' }}>
-                            <MessageSquare size={48} style={{ marginBottom: '16px', opacity: 0.2 }} />
-                            <p>Pick a conversation to view your adoption inquiries</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                )}
-            </div>
+
+                    <div className="chat-main-window">
+                        {selectedChat ? (
+                            <>
+                                <div className="chat-header">
+                                    <img src={`http://localhost:5000/uploads/${selectedChat.petId.images[0]}`} alt="avatar" />
+                                    <div>
+                                        <h4>Chatting about {selectedChat.petId.name}</h4>
+                                        <p>Donor: {selectedChat.donorId.fullName}</p>
+                                    </div>
+                                </div>
+
+                                <div className="chat-messages-area">
+                                    {messages.map((m, i) => {
+                                        // Fix 3: Standardize IDs as strings for reliable comparison
+                                        const senderId = String(m.senderId?._id || m.senderId);
+                                        const myId = String(user?._id || user?.id);
+                                        const isMe = senderId === myId;
+
+                                        return (
+                                            <div key={m._id || i} className={`msg-wrapper ${isMe ? 'me' : 'them'}`}>
+                                                <div className="msg-bubble">
+                                                    {m.text || "No message content"}
+                                                </div>
+                                                <span className="msg-time">
+                                                    {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...'}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                    <div ref={scrollRef} />
+                                </div>
+
+                                <form className="chat-input-bar" onSubmit={handleSend}>
+                                    <input
+                                        type="text"
+                                        placeholder="Write a message..."
+                                        value={text}
+                                        onChange={(e) => setText(e.target.value)}
+                                    />
+                                    <button type="submit" className="send-button">
+                                        <Send size={20} />
+                                    </button>
+                                </form>
+                            </>
+                        ) : (
+                            <div className="empty-state">
+                                <div className="empty-state-content" style={{ textAlign: 'center' }}>
+                                    <MessageSquare size={48} style={{ marginBottom: '16px', opacity: 0.2 }} />
+                                    <p>Pick a conversation to view your adoption inquiries</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </main>
         </div>
     );
 };

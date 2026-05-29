@@ -1,0 +1,243 @@
+/* Inherits global variables and resets from LandingPage.css */
+
+.contact-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    background-color: #FDFAEF; /* Ensures consistent background */
+    padding: 60px 0 100px 0;
+}
+
+.contact-inner {
+    width: 1440px;
+    max-width: 100%;
+    padding: 0 120px; /* Exact match to hero-inner / pet-listing-inner */
+    display: flex;
+    flex-direction: column;
+    gap: 64px;
+}
+
+/* --- HEADER SECTION --- */
+.contact-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+}
+
+/* Note: .hero-title, .hero-subtitle, and .highlight-purple are inherited from LandingPage.css */
+
+/* --- CARDS GRID --- */
+.contact-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+
+.contact-info-card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    padding: 32px 24px;
+    border: 1px solid #E6E2D3;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: transform 0.3s ease;
+}
+
+.contact-info-card:hover {
+    transform: translateY(-5px);
+}
+
+.contact-info-card.emergency-card {
+    border: 1.5px solid #F0CF65;
+    background: #FFFBF0;
+}
+
+.contact-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    background: #FFFBF0; 
+    color: #F0CF65;
+    border: 1px solid #E6E2D3;
+}
+
+/* Different icon background tints */
+.contact-icon-wrapper.purple { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; border-color: rgba(139, 92, 246, 0.2); }
+.contact-icon-wrapper.pink { background: rgba(236, 72, 153, 0.1); color: #EC4899; border-color: rgba(236, 72, 153, 0.2); }
+.contact-icon-wrapper.gold { background: #F0CF65; color: #FFFFFF; border-color: #F0CF65; }
+
+.contact-info-card h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1B1B1B;
+    margin: 0 0 16px 0;
+}
+
+.primary-info {
+    font-size: 16px;
+    color: #1B1B1B;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+}
+
+.secondary-info {
+    font-size: 14px;
+    color: #6D5D4B;
+    margin: 0;
+}
+
+.emergency-text {
+    font-size: 13px;
+    color: #F0CF65;
+    margin: 12px 0 0 0;
+    font-weight: 700;
+}
+
+/* --- FORM SECTION --- */
+.contact-form-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+}
+
+.form-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Note: .listing-title is inherited from LandingPage.css */
+
+.contact-form-box {
+    background: #FFFFFF;
+    width: 100%;
+    max-width: 760px;
+    border-radius: 32px;
+    padding: 48px;
+    border: 1px solid #E6E2D3;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-row.split {
+    flex-direction: row;
+    gap: 24px;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.contact-form-box label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1B1B1B;
+}
+
+.contact-form-box input,
+.contact-form-box select,
+.contact-form-box textarea {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1px solid #E6E2D3;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    color: #1B1B1B;
+    background-color: #FFFFFF;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.contact-form-box input::placeholder,
+.contact-form-box textarea::placeholder {
+    color: #A39B91;
+}
+
+.contact-form-box input:focus,
+.contact-form-box select:focus,
+.contact-form-box textarea:focus {
+    border-color: #4A3C2A;
+    box-shadow: 0 0 0 2px rgba(74, 60, 42, 0.1);
+}
+
+.contact-form-box textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Form Feedback States */
+.form-feedback {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.form-feedback.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid rgba(46, 125, 50, 0.18);
+}
+
+.form-feedback.error {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid rgba(198, 40, 40, 0.18);
+}
+
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 1200px) {
+    .contact-inner {
+        padding-left: 60px;
+        padding-right: 60px;
+    }
+    
+    .contact-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row.split {
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .contact-form-box {
+        padding: 32px 24px;
+    }
+}
+
+@media (max-width: 640px) {
+    .contact-inner {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
+    .contact-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}

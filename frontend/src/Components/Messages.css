@@ -12,14 +12,18 @@
 
 .messages-page-container {
     display: flex;
-    height: calc(100vh - 40px);
+    height: calc(100vh - 180px);
+    min-height: 560px;
     background: #ffffff;
-    margin: 20px;
     border-radius: 28px; /* Matches your filter-container */
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
     overflow: hidden;
     font-family: 'Outfit', sans-serif;
     border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.messages-adopter-main {
+    min-height: 100vh;
 }
 
 /* --- SIDEBAR --- */

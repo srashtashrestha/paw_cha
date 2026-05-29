@@ -99,7 +99,7 @@ const Inquiry = mongoose.model("Inquiry", InquirySchema);
 
 // Multer Setup
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, "uploads/"),
+    destination: (req, file, cb) => cb(null, uploadDir),
     filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
 });
 const upload = multer({ storage });
@@ -591,6 +591,20 @@ app.get("/api/donor/inquiries", authenticate, async (req, res) => {
         res.json({ success: true, inquiries });
     } catch (error) {
         res.status(500).json({ success: false });
+    }
+});
+
+// Example Express Backend Route
+app.post('/api/contact', async (req, res) => {
+    const { fullName, email, phone, subject, message } = req.body;
+    
+    try {
+        // Save to database or send an email via Nodemailer
+        // await ContactQuery.create({ fullName, email, phone, subject, message });
+        
+        res.status(200).json({ success: true, message: 'Message received!' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 

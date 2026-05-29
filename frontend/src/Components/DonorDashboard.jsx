@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, RefreshCcw, Mail, Phone, Calendar, ChevronLeft, Send, Bell, Activity, Users, Inbox, CheckCircle2 } from 'lucide-react';
+import { MapPin, Plus, LogOut, Layout, MessageSquare, Camera, X, RefreshCcw, Mail, Phone, Calendar, ChevronLeft, Send, Bell, Activity, Users, Inbox, CheckCircle2, XCircle } from 'lucide-react';
 import './DonorDashboard.css';
 import logo from '../Assets/Logo/Logo.png'; 
 import { io } from 'socket.io-client';
 
 const DonorDashboard = () => {
     const { user, logout } = useAuth();
-    console.log("Full User Object from Context:", user);
     const socket = useRef(null);
     const [activeTab, setActiveTab] = useState('inventory');
     const [activeChat, setActiveChat] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formStep, setFormStep] = useState(1);
     const [inquiries, setInquiries] = useState([]); 
+    
+    // NEW: Filter state for the inquiries tab
+    const [inquiryFilter, setInquiryFilter] = useState('All');
+
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [verificationFile, setVerificationFile] = useState(null);
     const [myPets, setMyPets] = useState([]);
@@ -34,6 +37,25 @@ const DonorDashboard = () => {
     });
 
     const donorName = user?.name || 'Donor';
+    const getProfilePicFile = (profilePic) => {
+        if (Array.isArray(profilePic)) return profilePic.find(Boolean);
+        return profilePic || null;
+    };
+    const renderAdopterAvatar = (adopter, fallbackName = 'Adopter', className = 'mini-avatar') => {
+        const profilePicFile = getProfilePicFile(adopter?.profilePic);
+        const profilePicSrc = profilePicFile ? `http://localhost:5000/uploads/${profilePicFile}` : null;
+        const initial = (adopter?.fullName || fallbackName || 'A').charAt(0);
+
+        return (
+            <div className={className}>
+                {profilePicSrc ? (
+                    <img src={profilePicSrc} alt={adopter?.fullName || fallbackName} />
+                ) : (
+                    initial
+                )}
+            </div>
+        );
+    };
     const getStatusConfirmationLabel = (status) => {
         if (status === "approved") return "approve this inquiry for chat";
         if (status === "finalized") return "finalize this adoption";
@@ -92,10 +114,6 @@ const DonorDashboard = () => {
         if (user?.token) {
             socket.current = io("http://localhost:5000", {
                 auth: { token: user.token }
-            });
-
-            socket.current.on("connect", () => {
-                console.log("Connected to socket:", socket.current.id);
             });
 
             return () => {
@@ -158,10 +176,8 @@ const DonorDashboard = () => {
             setChatMessages((prev) => {
                 const exists = prev.find((m) => {
                     if (msg._id && m._id) return m._id === msg._id;
-
                     const existingSenderId = String(m.senderId?._id || m.senderId);
                     const incomingSenderId = String(msg.senderId?._id || msg.senderId);
-
                     return (
                         m.text === msg.text &&
                         existingSenderId === incomingSenderId &&
@@ -200,31 +216,24 @@ const DonorDashboard = () => {
         return () => socket.current.off("notification_created", handleIncomingNotification);
     }, [fetchInquiries]);
 
-    const toggleNotifDropdown = () => {
-        setShowNotifDropdown((prev) => !prev);
-    };
+    const toggleNotifDropdown = () => setShowNotifDropdown((prev) => !prev);
 
     const handleMarkNotificationRead = async (notificationId) => {
         if (!user?.token) return;
-
         const targetNotification = notifications.find((notification) => notification._id === notificationId);
         if (!targetNotification || targetNotification.read) return;
 
         try {
             const response = await fetch(`http://localhost:5000/api/notifications/read/${notificationId}`, {
                 method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${user.token}`
-                }
+                headers: { Authorization: `Bearer ${user.token}` }
             });
             const result = await response.json();
 
             if (result.success) {
                 setNotifications((prev) =>
                     prev.map((notification) =>
-                        notification._id === notificationId
-                            ? { ...notification, read: true }
-                            : notification
+                        notification._id === notificationId ? { ...notification, read: true } : notification
                     )
                 );
                 setUnreadCount((prev) => Math.max(0, prev - 1));
@@ -244,11 +253,7 @@ const DonorDashboard = () => {
         e.preventDefault();
         if (!newMessage.trim() || !activeChat) return;
 
-        const messageData = {
-            chatId: activeChat._id,
-            text: newMessage
-        };
-
+        const messageData = { chatId: activeChat._id, text: newMessage };
         const savedMsg = newMessage;
         setNewMessage("");
 
@@ -418,7 +423,6 @@ const DonorDashboard = () => {
         setActiveChat(inquiry);
         setActiveTab('chat');
         fetchMessages(inquiry._id);
-        
         if (socket.current) {
             socket.current.emit("join_chat", inquiry._id); 
         }
@@ -439,7 +443,7 @@ const DonorDashboard = () => {
                         <ChevronLeft size={20} />
                     </button>
                     <div className="chat-user-info">
-                        <div className="mini-avatar">{activeChat.adopterId?.fullName?.[0]}</div>
+                        {renderAdopterAvatar(activeChat.adopterId, activeChat.adopterName)}
                         <div>
                             <h3>{activeChat.adopterId?.fullName}</h3>
                             <p>Inquiry for {activeChat.petId?.name}</p>
@@ -489,6 +493,15 @@ const DonorDashboard = () => {
     const isNewDonor = myPets.length === 0;
     const isWaitingDonor = myPets.length > 0 && pendingInquiries.length === 0;
     const isActiveManager = myPets.length > 0 && pendingInquiries.length > 0;
+
+    // --- NEW: INQUIRY FILTERING LOGIC ---
+    const displayInquiries = inquiries.filter(inq => {
+        if (inquiryFilter === 'All') return true;
+        if (inquiryFilter === 'Pending') return inq.status === 'pending';
+        if (inquiryFilter === 'Approved') return inq.status === 'approved';
+        if (inquiryFilter === 'Closed') return ['rejected', 'declined', 'adopted', 'closed', 'finalized'].includes(inq.status);
+        return true;
+    });
 
     return (
         <div className="dashboard-layout">
@@ -607,7 +620,6 @@ const DonorDashboard = () => {
 
                 {activeTab === 'inventory' ? (
                     <div className="dashboard-home-view">
-                        
                         {/* KPI QUICK STATS ROW */}
                         <div className="kpi-grid">
                             <div className="kpi-card">
@@ -673,7 +685,7 @@ const DonorDashboard = () => {
                                     {pendingInquiries.slice(0, 2).map(inq => (
                                         <div key={inq._id} className="mini-inquiry-item">
                                             <div className="mini-inquiry-info">
-                                                <div className="avatar-small">{inq.adopterId?.fullName?.[0] || 'A'}</div>
+                                                {renderAdopterAvatar(inq.adopterId, inq.adopterName, 'avatar-small')}
                                                 <div>
                                                     <strong>{inq.adopterId?.fullName || inq.adopterName}</strong>
                                                     <p>Inquired about {inq.petId?.name}</p>
@@ -723,13 +735,30 @@ const DonorDashboard = () => {
                     </div>
                 ) : activeTab === 'inquiries' ? (
                     <div className="inquiry-container">
-                        {inquiries.length === 0 ? (
+                        
+                        {/* NEW: Filter Tabs Row */}
+                        <div className="inquiry-filter-tabs">
+                            {['All', 'Pending', 'Approved', 'Closed'].map(filter => (
+                                <button
+                                    key={filter}
+                                    className={`inquiry-filter-btn ${inquiryFilter === filter ? 'active' : ''}`}
+                                    onClick={() => setInquiryFilter(filter)}
+                                >
+                                    {filter}
+                                    {filter === 'Pending' && pendingInquiries.length > 0 && (
+                                        <span className="filter-badge">{pendingInquiries.length}</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        {displayInquiries.length === 0 ? (
                             <div className="empty-state" style={{ textAlign: 'center', padding: '50px' }}>
                                 <MessageSquare size={48} color="var(--donor-text-soft)" style={{ marginBottom: '10px' }} />
-                                <p>No adoption inquiries yet.</p>
+                                <p>No {inquiryFilter !== 'All' ? inquiryFilter.toLowerCase() : ''} adoption inquiries found.</p>
                             </div>
                         ) : (
-                            inquiries.map((inq) => {
+                            displayInquiries.map((inq) => {
                                 const inquiryStatusLabel =
                                     inq.status === 'approved' && inq.petId?.status === 'reserved'
                                         ? 'reserved'
@@ -739,49 +768,72 @@ const DonorDashboard = () => {
                                 <div key={inq._id} className={`inquiry-card inquiry-${inq.status}`}>
                                     <div className="inquiry-profile-column">
                                         <div className="adopter-profile">
-                                            <div className="mini-avatar">{inq.adopterId?.fullName?.[0] || 'A'}</div>
+                                            {renderAdopterAvatar(inq.adopterId, inq.adopterName)}
                                             <div className="adopter-info-text">
                                                 <h3>{inq.adopterId?.fullName || inq.adopterName}</h3>
-                                                <p className="app-for"><span className="meta-label">Interested in</span> <strong>{inq.petId?.name || 'Deleted Pet'}</strong></p>
+                                                
+                                                {/* NEW: Pet Thumbnail & Name block */}
+                                                <div className="app-for">
+                                                    <span className="meta-label">Interested in</span> 
+                                                    <div className="interested-pet-tag">
+                                                        {inq.petId?.images?.[0] ? (
+                                                            <img 
+                                                                src={`http://localhost:5000/uploads/${inq.petId.images[0]}`} 
+                                                                className="pet-mini-thumb" 
+                                                                alt="" 
+                                                            />
+                                                        ) : (
+                                                            <div className="pet-mini-thumb fallback">🐾</div>
+                                                        )}
+                                                        <strong>{inq.petId?.name || 'Deleted Pet'}</strong>
+                                                    </div>
+                                                </div>
+
                                             </div>
                                         </div>
                                         <span className={`status-pill ${inquiryStatusLabel}`}>{inquiryStatusLabel}</span>
                                     </div>
                                     
                                     <div className="inquiry-body">
-                                        <div className="contact-info-row">
-                                            <span><Mail size={14}/> {inq.adopterId?.email || inq.adopterEmail}</span>
-                                            {inq.phone && <span><Phone size={14}/> {inq.phone}</span>}
-                                            <span><Calendar size={14}/> {new Date(inq.createdAt).toLocaleDateString()}</span>
-                                            {inq.petId?.status && <span><MapPin size={14}/> <span className="meta-label">Pet</span> {inq.petId.status}</span>}
-                                        </div>
-                                        
+                                        {/* NEW: Motivation moved to the top of the body */}
                                         {inq.motivation && (
                                             <div className="motivation-box">
                                                 <h4 className="meta-label">Motivation</h4>
                                                 <p>"{inq.motivation}"</p>
                                             </div>
                                         )}
+                                        
+                                        <div className="contact-info-row">
+                                            <span><Mail size={14}/> {inq.adopterId?.email || inq.adopterEmail}</span>
+                                            {inq.phone && <span><Phone size={14}/> {inq.phone}</span>}
+                                            <span><Calendar size={14}/> {new Date(inq.createdAt).toLocaleDateString()}</span>
+                                            {/* Pet status pill removed from here! */}
+                                        </div>
                                     </div>
 
                                     <div className="inquiry-footer">
+                                        {/* NEW: Anchored Status Badges */}
                                         {inq.status === 'pending' ? (
                                             <>
                                                 <button className="delete-action-btn" onClick={() => handleStatusUpdate(inq._id, 'rejected')}>Reject</button>
-                                                <button className="edit-action-btn" onClick={() => handleStatusUpdate(inq._id, 'approved')}>Approve Inquiry for Chat</button>
+                                                <button className="edit-action-btn" onClick={() => handleStatusUpdate(inq._id, 'approved')}>Approve Inquiry</button>
                                             </>
                                         ) : inq.status === 'approved' ? (
                                             <>
-                                                <button className="danger-action-btn" onClick={() => handleStatusUpdate(inq._id, 'declined')}>Decline Adoption</button>
-                                                <button className="success-action-btn" onClick={() => handleStatusUpdate(inq._id, 'finalized')}>Finalize Adoption</button>
+                                                <button className="danger-action-btn" onClick={() => handleStatusUpdate(inq._id, 'declined')}>Decline</button>
+                                                <button className="success-action-btn" onClick={() => handleStatusUpdate(inq._id, 'finalized')}>Finalize</button>
                                                 <button className="message-btn" onClick={() => handleMessageClick(inq)}>
-                                                    <MessageSquare size={16} /> Message Adopter
+                                                    <MessageSquare size={16} /> Message
                                                 </button>
                                             </>
-                                        ) : inq.status === 'adopted' ? (
-                                            <span className="info-state-text">Adoption finalized</span>
-                                        ) : inq.status === 'closed' ? (
-                                            <span className="info-state-text">Closed after adoption</span>
+                                        ) : ['adopted', 'finalized', 'closed'].includes(inq.status) ? (
+                                            <div className="finalized-banner success">
+                                                <CheckCircle2 size={18} /> Adoption Completed
+                                            </div>
+                                        ) : ['rejected', 'declined'].includes(inq.status) ? (
+                                            <div className="finalized-banner danger">
+                                                <XCircle size={18} /> Inquiry Closed
+                                            </div>
                                         ) : null}
                                     </div>
                                 </div>
