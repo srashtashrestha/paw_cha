@@ -338,7 +338,7 @@ const AdopterDashboard = () => {
                                         <span>Final Decision</span>
                                     </div>
                                 </div>
-                                <button className="widget-action-btn" onClick={() => navigate('/my-applications')}>
+                                <button className="widget-action-btn" onClick={() => navigate('/my-inquiries')}>
                                     Manage Applications
                                 </button>
                             </div>

@@ -73,7 +73,7 @@ const LandingPage = () => {
 <section className="hero-container">
     <div className="hero-inner">
         <div className="hero-content" style={{ alignItems: 'flex-start' }}> {/* Ensures all children are left-aligned */}
-            <h1 className="hero-title">Find Your New <br /> Bestfriend Today</h1>
+            <h1 className="hero-title">Find Your New <br /><span className="highlight-purple"> Bestfriend </span> Today</h1>
             <p 
                 className="hero-subtitle" 
                 style={{ textAlign: 'left', marginLeft: 0, marginRight: 'auto' }}

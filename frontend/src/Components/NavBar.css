@@ -74,6 +74,75 @@
     gap: 8px; /* Precise spacing you asked for */
 }
 
+.nav-auth-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-user-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px 6px 6px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+}
+
+.nav-user-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(74, 60, 42, 0.08);
+}
+
+.nav-user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #4A3C2A;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.nav-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.nav-user-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.1;
+    color: #1B1B1B;
+}
+
+.nav-user-text small {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #6D5D4B;
+}
+
+.nav-user-text strong {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.92rem;
+}
+
 .nav-btn {
     padding: 10px 24px;
     border-radius: 10px;
@@ -94,6 +163,18 @@
     background: #5d4037; /* Brown from your login page */
     border: none;
     color: white;
+}
+
+.nav-btn.dashboard {
+    background: #5d4037;
+    border: none;
+    color: white;
+}
+
+.nav-btn.logout {
+    background: white;
+    border: 1px solid #d7ccc8;
+    color: #5d4037;
 }
 
 .nav-btn:hover {

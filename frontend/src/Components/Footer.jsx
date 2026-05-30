@@ -55,7 +55,7 @@ const Footer = () => {
                             <div className="contact-info">
                                 <div className="contact-item">
                                     <Mail size={20} />
-                                    <span>hello@pawcha.com</span>
+                                    <span>info.pawcha@gmail.com</span>
                                 </div>
                                 <div className="contact-item">
                                     <MapPin size={20} />

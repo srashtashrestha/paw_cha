@@ -184,7 +184,8 @@
 /* --- 4. CTA SECTION --- */
 .services-cta-section {
     width: 100%;
-    border-radius: 48px;
+    height: 100%;
+    border-radius: 24px;
     /* INSTRUCTION: Link to your exported Abstract SVG background here */
     background-image: url('C:\herald\fyp\PetAdoptionPortal\frontend\src\Assets\Photos\Banner.svg'); 
     background-color: #E5E0FC; /* Solid fallback matching the purple tint */
