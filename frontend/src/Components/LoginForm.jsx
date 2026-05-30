@@ -20,8 +20,9 @@ const LoginForm = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+     const response = await fetch(`${BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -41,11 +42,6 @@ const LoginForm = () => {
           return;
         }
 
-        /**
-         * PROFESSIONAL UPDATE:
-         * We pass the user data to the AuthContext. 
-         * The context handles clearing the old session and setting the new one.
-         */
         login({
           token: data.token,
           role: data.role,
@@ -57,7 +53,6 @@ const LoginForm = () => {
 
         alert(`Welcome back, ${data.fullName}!`); 
 
-        // Role-based routing
         if (data.role === 'donor') {
           navigate('/donor-dashboard');
         } else if (data.role === 'admin') {
