@@ -39,7 +39,7 @@ app.use("/uploads", express.static(uploadDir));
 const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key_here";
 
 // ================= 3. DATABASE =================
-mongoose.connect(process.env.MONNODEGO_URI || "mongodb+srv://srashtashr06:FBviKZs8IZgDGtsP@petadoptionportal.59hlh2j.mongodb.net/PetPortal")
+mongoose.connect(process.env.MONGO_URI || "mongodb+srv://srashtashr06:FBviKZs8IZgDGtsP@petadoptionportal.59hlh2j.mongodb.net/PetPortal")
     .then(() => console.log("DB Connected Successfully"))
     .catch((err) => console.log("DB Connection Failed", err));
 
