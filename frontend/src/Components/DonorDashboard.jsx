@@ -5,6 +5,8 @@ import './DonorDashboard.css';
 import logo from '../Assets/Logo/Logo.png'; 
 import { io } from 'socket.io-client';
 
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 const DonorDashboard = () => {
     const { user, logout } = useAuth();
     const socket = useRef(null);
@@ -112,7 +114,9 @@ const DonorDashboard = () => {
 
     useEffect(() => {
         if (user?.token) {
-            socket.current = io("http://localhost:5000", {
+            socket.current = io(BASE_URL, {
+                transports: ['websocket', 'polling'],
+                withCredentials: true,
                 auth: { token: user.token }
             });
 

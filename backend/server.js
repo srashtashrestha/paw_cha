@@ -21,7 +21,7 @@ const allowedOrigins = [
     "http://127.0.0.1:3000"
 ];
 
-app.use(cors({
+const corsOptions = {
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps, curl, or server-to-server)
         if (!origin) return callback(null, true);
@@ -34,11 +34,15 @@ app.use(cors({
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200,
+    preflightContinue: true
+};
+
+app.use(cors(corsOptions));
 
 // Explicitly handle global OPTIONS preflight requests gracefully across serverless functions
-app.options("*", cors());
+app.options(/.*/, cors(corsOptions), (req, res) => res.sendStatus(200));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -146,8 +150,10 @@ const authenticate = (req, res, next) => {
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: { 
-        origin: ["https://paw-cha.vercel.app", "http://localhost:3000", "http://127.0.0.1:3000"],
-        credentials: true
+        origin: allowedOrigins,
+        credentials: true,
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type", "Authorization"]
     }
 });
 
