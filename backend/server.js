@@ -26,7 +26,10 @@ const corsOptions = {
         // Allow requests with no origin (like mobile apps, curl, or server-to-server)
         if (!origin) return callback(null, true);
         
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        const isLocalDevOrigin = process.env.NODE_ENV !== "production"
+            && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+
+        if (allowedOrigins.indexOf(origin) !== -1 || isLocalDevOrigin) {
             callback(null, true);
         } else {
             callback(new Error("Not allowed by CORS"));
@@ -35,8 +38,7 @@ const corsOptions = {
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 200,
-    preflightContinue: true
+    optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
@@ -63,10 +65,16 @@ app.use("/uploads", express.static(uploadDir));
 const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key_here";
 
 // ================= 3. DATABASE =================
+const LOCAL_MONGO_URI = "mongodb+srv://srashtashr06:FBviKZs8IZgDGtsP@petadoptionportal.59hlh2j.mongodb.net/PetPortal";
+
 const connectDB = async () => {
     try {
-        const rawMongoUri = process.env.MONGODB_URI ?? process.env.MONGO_URI;
-        const mongoUriSource = process.env.MONGODB_URI ? "MONGODB_URI" : process.env.MONGO_URI ? "MONGO_URI" : "none";
+        const rawMongoUri = process.env.MONGODB_URI ?? process.env.MONGO_URI ?? LOCAL_MONGO_URI;
+        const mongoUriSource = process.env.MONGODB_URI
+            ? "MONGODB_URI"
+            : process.env.MONGO_URI
+                ? "MONGO_URI"
+                : "LOCAL_MONGO_URI";
         const mongoUri = typeof rawMongoUri === "string"
             ? rawMongoUri.trim().replace(/^['"]|['"]$/g, "")
             : "";
@@ -81,7 +89,7 @@ const connectDB = async () => {
         });
 
         if (!mongoUri) {
-            console.error("[DB] MongoDB connection skipped: MONGODB_URI or MONGO_URI is missing.");
+            console.error("[DB] MongoDB connection skipped: no MongoDB URI is available.");
             return;
         }
 
@@ -231,7 +239,8 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(5000, () => console.log("Server running on port 5000"));
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => console.log(`Server running locally on port ${PORT}`));
 
 // ================= 5. USER SETTINGS ROUTES =================
 
@@ -1255,13 +1264,5 @@ app.delete("/api/admin/reject-donor/:id", async (req, res) => {
     await User.findByIdAndDelete(req.params.id);
     res.json({ success: true });
 });
-
-// app.listen(5000, () => {
-//     console.log("Server running on http://localhost:5000"); 
-// });
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`Server running locally on port ${PORT}`));
-}
 
 module.exports = app;

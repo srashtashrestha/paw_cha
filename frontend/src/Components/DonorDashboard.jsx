@@ -5,7 +5,8 @@ import './DonorDashboard.css';
 import logo from '../Assets/Logo/Logo.png'; 
 import { io } from 'socket.io-client';
 
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const SOCKET_URL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:5000';
 
 const DonorDashboard = () => {
     const { user, logout } = useAuth();
@@ -45,7 +46,7 @@ const DonorDashboard = () => {
     };
     const renderAdopterAvatar = (adopter, fallbackName = 'Adopter', className = 'mini-avatar') => {
         const profilePicFile = getProfilePicFile(adopter?.profilePic);
-        const profilePicSrc = profilePicFile ? `http://localhost:5000/uploads/${profilePicFile}` : null;
+        const profilePicSrc = profilePicFile ? `${API_BASE_URL}/uploads/${profilePicFile}` : null;
         const initial = (adopter?.fullName || fallbackName || 'A').charAt(0);
 
         return (
@@ -70,13 +71,14 @@ const DonorDashboard = () => {
     const fetchMyPets = useCallback(async () => {
         if (!user?.token) return;
         try {
-            const response = await fetch("http://localhost:5000/api/donor/my-pets", {
+            const response = await fetch(`${API_BASE_URL}/api/donor/my-pets`, {
                 headers: { 
                     "Authorization": `Bearer ${user.token}`,
                     "Cache-Control": "no-cache" 
                 }
             });
             if (response.status === 401) { logout(); return; }
+            if (!response.ok) throw new Error(`My pets request failed with status ${response.status}`);
             const result = await response.json();
             if (result.success) setMyPets(result.pets);
         } catch (error) {
@@ -87,7 +89,7 @@ const DonorDashboard = () => {
     const fetchInquiries = useCallback(async () => {
         if (!user?.token) return;
         try {
-            const response = await fetch("http://localhost:5000/api/donor/inquiries", {
+            const response = await fetch(`${API_BASE_URL}/api/donor/inquiries`, {
                 headers: { "Authorization": `Bearer ${user.token}` }
             });
             const result = await response.json();
@@ -100,7 +102,7 @@ const DonorDashboard = () => {
     const fetchMessages = useCallback(async (inquiryId) => {
         if (!user?.token || !inquiryId) return;
         try {
-            const response = await fetch(`http://localhost:5000/api/messages/${inquiryId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/messages/${inquiryId}`, {
                 headers: { "Authorization": `Bearer ${user.token}` }
             });
             const result = await response.json();
@@ -114,7 +116,7 @@ const DonorDashboard = () => {
 
     useEffect(() => {
         if (user?.token) {
-            socket.current = io(BASE_URL, {
+            socket.current = io(SOCKET_URL, {
                 transports: ['websocket', 'polling'],
                 withCredentials: true,
                 auth: { token: user.token }
@@ -138,7 +140,7 @@ const DonorDashboard = () => {
             if (!user?.token) return;
 
             try {
-                const response = await fetch("http://localhost:5000/api/notifications", {
+                const response = await fetch(`${API_BASE_URL}/api/notifications`, {
                     headers: { Authorization: `Bearer ${user.token}` }
                 });
                 const result = await response.json();
@@ -228,7 +230,7 @@ const DonorDashboard = () => {
         if (!targetNotification || targetNotification.read) return;
 
         try {
-            const response = await fetch(`http://localhost:5000/api/notifications/read/${notificationId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/notifications/read/${notificationId}`, {
                 method: "PUT",
                 headers: { Authorization: `Bearer ${user.token}` }
             });
@@ -262,7 +264,7 @@ const DonorDashboard = () => {
         setNewMessage("");
 
         try {
-            const response = await fetch("http://localhost:5000/api/messages/send", {
+            const response = await fetch(`${API_BASE_URL}/api/messages/send`, {
                 method: "POST",
                 headers: { 
                     "Authorization": `Bearer ${user.token}`,
@@ -286,7 +288,7 @@ const DonorDashboard = () => {
         if (!window.confirm(`Are you sure you want to ${getStatusConfirmationLabel(newStatus)}?`)) return;
 
         try {
-            const response = await fetch(`http://localhost:5000/api/inquiries/status/${inquiryId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/inquiries/status/${inquiryId}`, {
                 method: "PUT",
                 headers: {
                     "Authorization": `Bearer ${user.token}`,
@@ -347,7 +349,7 @@ const DonorDashboard = () => {
     const handleDeletePet = async (petId) => {
         if (!window.confirm("Are you sure you want to delete this listing?")) return;
         try {
-            const response = await fetch(`http://localhost:5000/api/pets/delete/${petId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/pets/delete/${petId}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${user.token}` }
             });
@@ -386,8 +388,8 @@ const DonorDashboard = () => {
         }
 
         const url = selectedPetId 
-            ? `http://localhost:5000/api/pets/update/${selectedPetId}` 
-            : "http://localhost:5000/api/pets/list";
+            ? `${API_BASE_URL}/api/pets/update/${selectedPetId}` 
+            : `${API_BASE_URL}/api/pets/list`;
 
         try {
             const response = await fetch(url, {
@@ -716,7 +718,7 @@ const DonorDashboard = () => {
                                 <div key={pet._id} className="pet-display-card">
                                     <div className="pet-card-image-wrapper">
                                         {pet.images?.length > 0 ? (
-                                            <img src={`http://localhost:5000/uploads/${pet.images[0]}`} alt={pet.name} />
+                                            <img src={`${API_BASE_URL}/uploads/${pet.images[0]}`} alt={pet.name} />
                                         ) : ( <div className="placeholder-img"><Camera size={32} /></div> )}
                                     </div>
                                     <div className="pet-card-content">
@@ -782,7 +784,7 @@ const DonorDashboard = () => {
                                                     <div className="interested-pet-tag">
                                                         {inq.petId?.images?.[0] ? (
                                                             <img 
-                                                                src={`http://localhost:5000/uploads/${inq.petId.images[0]}`} 
+                                                                src={`${API_BASE_URL}/uploads/${inq.petId.images[0]}`} 
                                                                 className="pet-mini-thumb" 
                                                                 alt="" 
                                                             />

@@ -5,6 +5,8 @@ import { Search, Bell, Heart, MapPin, Filter, ArrowLeft, X, CheckCircle, ShieldC
 import './ExplorePets.css';
 import AdopterSideBar from './AdopterSideBar';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+
 const ExplorePets = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -16,6 +18,7 @@ const ExplorePets = () => {
     const [showNotifDropdown, setShowNotifDropdown] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [searchTerm, setSearchTerm] = useState("");
+    const [petsError, setPetsError] = useState("");
 
     const [showFilters, setShowFilters] = useState(false);
     const [filterCriteria, setFilterCriteria] = useState({
@@ -31,7 +34,7 @@ const ExplorePets = () => {
     const profilePicFile = Array.isArray(user?.profilePic)
         ? user.profilePic.find(Boolean)
         : user?.profilePic;
-    const profilePicSrc = profilePicFile ? `http://localhost:5000/uploads/${profilePicFile}` : null;
+    const profilePicSrc = profilePicFile ? `${API_BASE_URL}/uploads/${profilePicFile}` : null;
 
     const normalizeText = (value) =>
         String(value || "")
@@ -42,19 +45,34 @@ const ExplorePets = () => {
 
     const fetchPets = useCallback(async () => {
         try {
-            const petsRes = await fetch("http://localhost:5000/api/pets", {
+            setPetsError("");
+            const petsRes = await fetch(`${API_BASE_URL}/api/pets`, {
                 cache: "no-store",
                 headers: {
                     "Cache-Control": "no-cache"
                 }
             });
-            const petsData = await petsRes.json();
 
-            if (petsData.success) {
-                setPets(petsData.pets);
+            if (!petsRes.ok) {
+                throw new Error(`Pets request failed with status ${petsRes.status}`);
             }
+
+            const petsData = await petsRes.json();
+            const nextPets = Array.isArray(petsData)
+                ? petsData
+                : Array.isArray(petsData.pets)
+                    ? petsData.pets
+                    : [];
+
+            if (!Array.isArray(nextPets)) {
+                throw new Error("Pets response did not include a pets array");
+            }
+
+            setPets(nextPets);
         } catch (error) {
             console.error("Error loading pet list:", error);
+            setPets([]);
+            setPetsError(error.message || "Unable to load pets.");
         }
     }, []);
 
@@ -64,10 +82,10 @@ const ExplorePets = () => {
 
         try {
             const [appsResult, favoritesResult] = await Promise.allSettled([
-                fetch(`http://localhost:5000/api/adopter/my-inquiries`, {
+                fetch(`${API_BASE_URL}/api/adopter/my-inquiries`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 }),
-                fetch(`http://localhost:5000/api/adopter/favorites`, {
+                fetch(`${API_BASE_URL}/api/adopter/favorites`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
             ]);
@@ -136,7 +154,7 @@ const ExplorePets = () => {
             if (!token) return;
 
             try {
-                const response = await fetch(`http://localhost:5000/api/notifications`, {
+                const response = await fetch(`${API_BASE_URL}/api/notifications`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -168,7 +186,7 @@ const ExplorePets = () => {
         if (!targetNotification || targetNotification.read) return;
 
         try {
-            const response = await fetch(`http://localhost:5000/api/notifications/read/${notificationId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/notifications/read/${notificationId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -200,8 +218,8 @@ const ExplorePets = () => {
         try {
             const response = await fetch(
                 isFavorite
-                    ? `http://localhost:5000/api/adopter/favorites/${petId}`
-                    : `http://localhost:5000/api/adopter/favorites`,
+                    ? `${API_BASE_URL}/api/adopter/favorites/${petId}`
+                    : `${API_BASE_URL}/api/adopter/favorites`,
                 {
                     method: isFavorite ? 'DELETE' : 'POST',
                     headers: {
@@ -453,7 +471,7 @@ const ExplorePets = () => {
                                 return (
                                     <div key={pet._id} className={`pet-item-card ${isApplied ? 'pet-applied' : ''}`}>
                                         <div className="pet-thumb">
-                                            <img src={pet.images?.[0] ? `http://localhost:5000/uploads/${pet.images[0]}` : '/placeholder.png'} alt={pet.name} />
+                                            <img src={pet.images?.[0] ? `${API_BASE_URL}/uploads/${pet.images[0]}` : '/placeholder.png'} alt={pet.name} />
                                             {isApplied && (
                                                 <div className="applied-tag">
                                                     <CheckCircle size={14} /> Applied
@@ -488,7 +506,7 @@ const ExplorePets = () => {
                                     </div>
                                 );
                             }) : (
-                                <div className="status-msg">No pets found matching your filters.</div>
+                                <div className="status-msg">{petsError || "No pets found matching your filters."}</div>
                             )}
                         </div>
                     )}
