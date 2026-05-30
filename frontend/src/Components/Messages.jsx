@@ -8,7 +8,7 @@ import AdopterHeaderActions from './AdopterHeaderActions';
 import './Messages.css';
 
 // Fix 1: Using a single socket instance connection
-const socket = io('http://localhost:5000');
+import { io } from 'socket.io-client';
 
 const Messages = () => {
     const { user } = useAuth();
