@@ -264,7 +264,38 @@ app.get("/", (req, res) => {
 
 app.post("/api/login", async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password } = req.body || {};
+        const missingConfig = [];
+
+        if (process.env.NODE_ENV === "production" && !process.env.MONGO_URI) {
+            missingConfig.push("MONGO_URI");
+        }
+        if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+            missingConfig.push("JWT_SECRET");
+        }
+
+        if (missingConfig.length) {
+            return res.status(500).json({
+                success: false,
+                message: "Server configuration error.",
+                missing: missingConfig
+            });
+        }
+
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({
+                success: false,
+                message: "Database connection is not ready. Please try again shortly."
+            });
+        }
+
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required."
+            });
+        }
+
         const user = await User.findOne({ email, password });
         
         if (!user) return res.status(401).json({ success: false, message: "Invalid credentials" });
@@ -289,7 +320,12 @@ app.post("/api/login", async (req, res) => {
             profilePic: user.profilePic || null // Ensures frontend doesn't get empty string
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Server Error" });
+        console.error("Login route error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Login failed due to a server error.",
+            error: process.env.NODE_ENV === "production" ? undefined : error.message
+        });
     }
 });
 app.post("/api/inquiries/apply", authenticate, async (req, res) => {

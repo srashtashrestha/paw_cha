@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import io from 'socket.io-client';
 import { MessageSquare, Send } from 'lucide-react';
 import axios from 'axios';
 import AdopterSideBar from './AdopterSideBar';
 import AdopterHeaderActions from './AdopterHeaderActions';
 import './Messages.css';
-
-// Fix 1: Using a single socket instance connection
 import { io } from 'socket.io-client';
+
+const SOCKET_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const socket = io(SOCKET_URL, {
+    transports: ['websocket', 'polling'],
+    withCredentials: true
+});
 
 const Messages = () => {
     const { user } = useAuth();
