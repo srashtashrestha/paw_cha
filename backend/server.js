@@ -16,7 +16,8 @@ const app = express();
 const Notification = require("./models/Notifications");
 // ================= 1. MIDDLEWARE =================
 app.use(cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+    // Allows requests from localhost during development and your Vercel URL in production
+    origin: process.env.NODE_ENV === 'production' ? true : ["http://localhost:3000", "http://127.0.0.1:3000"],
     credentials: true
 }));
 app.use(express.json());
@@ -34,10 +35,10 @@ if (!fs.existsSync(uploadDir)) {
 // This serves your images to http://localhost:5000/uploads/filename.jpg
 app.use("/uploads", express.static(uploadDir));
 
-const SECRET_KEY = "your_secret_key_here";
+const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key_here";
 
 // ================= 3. DATABASE =================
-mongoose.connect("mongodb+srv://srashtashr06:FBviKZs8IZgDGtsP@petadoptionportal.59hlh2j.mongodb.net/PetPortal")
+mongoose.connect(process.env.MONGO_URI || "mongodb+srv://srashtashr06:FBviKZs8IZgDGtsP@petadoptionportal.59hlh2j.mongodb.net/PetPortal")
     .then(() => console.log("DB Connected Successfully"))
     .catch((err) => console.log("DB Connection Failed", err));
 
@@ -1157,3 +1158,8 @@ app.delete("/api/admin/reject-donor/:id", async (req, res) => {
 // app.listen(5000, () => {
 //     console.log("Server running on http://localhost:5000"); 
 // });
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`Server running locally on port ${PORT}`));
+}
+module.exports = app;
