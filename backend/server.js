@@ -17,7 +17,7 @@ const Notification = require("./models/Notifications");
 // ================= 1. MIDDLEWARE =================
 app.use(cors({
     // Allows requests from localhost during development and your Vercel URL in production
-    origin: process.env.NODE_ENV === 'production' ? true : ["http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: process.env._ENV === 'production' ? true : ["http://localhost:3000", "http://127.0.0.1:3000"],
     credentials: true
 }));
 app.use(express.json());
@@ -29,16 +29,17 @@ let verifiedPasswordResets = {};
 // ================= 2. STORAGE & STATIC FILES =================
 // Use path.resolve to ensure the 'uploads' folder is reached correctly
 const uploadDir = path.resolve(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+if (process.env.NODE_ENV !== 'production') {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+    }
 }
-// This serves your images to http://localhost:5000/uploads/filename.jpg
-app.use("/uploads", express.static(uploadDir));
 
+app.use("/uploads", express.static(uploadDir));
 const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key_here";
 
 // ================= 3. DATABASE =================
-mongoose.connect(process.env.MONGO_URI || "mongodb+srv://srashtashr06:FBviKZs8IZgDGtsP@petadoptionportal.59hlh2j.mongodb.net/PetPortal")
+mongoose.connect(process.env.MONNODEGO_URI || "mongodb+srv://srashtashr06:FBviKZs8IZgDGtsP@petadoptionportal.59hlh2j.mongodb.net/PetPortal")
     .then(() => console.log("DB Connected Successfully"))
     .catch((err) => console.log("DB Connection Failed", err));
 
