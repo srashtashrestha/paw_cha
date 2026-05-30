@@ -63,9 +63,44 @@ app.use("/uploads", express.static(uploadDir));
 const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key_here";
 
 // ================= 3. DATABASE =================
-mongoose.connect(process.env.MONGO_URI || "mongodb+srv://srashtashr06:FBviKZs8IZgDGtsP@petadoptionportal.59hlh2j.mongodb.net/PetPortal")
-    .then(() => console.log("DB Connected Successfully"))
-    .catch((err) => console.log("DB Connection Failed", err));
+const connectDB = async () => {
+    try {
+        const rawMongoUri = process.env.MONGODB_URI ?? process.env.MONGO_URI;
+        const mongoUriSource = process.env.MONGODB_URI ? "MONGODB_URI" : process.env.MONGO_URI ? "MONGO_URI" : "none";
+        const mongoUri = typeof rawMongoUri === "string"
+            ? rawMongoUri.trim().replace(/^['"]|['"]$/g, "")
+            : "";
+
+        console.log("[DB] URI source:", mongoUriSource);
+        console.log("[DB] MONGODB_URI type:", typeof process.env.MONGODB_URI, "present:", Boolean(process.env.MONGODB_URI));
+        console.log("[DB] MONGO_URI type:", typeof process.env.MONGO_URI, "present:", Boolean(process.env.MONGO_URI));
+        console.log("[DB] Sanitized URI state:", {
+            type: typeof mongoUri,
+            length: mongoUri.length,
+            startsWithMongoScheme: mongoUri.startsWith("mongodb://") || mongoUri.startsWith("mongodb+srv://")
+        });
+
+        if (!mongoUri) {
+            console.error("[DB] MongoDB connection skipped: MONGODB_URI or MONGO_URI is missing.");
+            return;
+        }
+
+        if (!mongoUri.startsWith("mongodb://") && !mongoUri.startsWith("mongodb+srv://")) {
+            console.error("[DB] MongoDB connection skipped: invalid URI scheme after sanitization.");
+            return;
+        }
+
+        await mongoose.connect(mongoUri);
+        console.log("DB Connected Successfully");
+    } catch (err) {
+        console.error("[DB] MongoDB connection failed safely:", {
+            name: err.name,
+            message: err.message
+        });
+    }
+};
+
+connectDB();
 
 // ================= 4. MODELS =================
 const UserSchema = new mongoose.Schema({
